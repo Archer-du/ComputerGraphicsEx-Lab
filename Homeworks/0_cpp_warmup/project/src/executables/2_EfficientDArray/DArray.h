@@ -1,4 +1,6 @@
 #pragma once
+#include <cassert>
+#include <iostream>
 
 // interfaces of Dynamic Array class DArray
 class DArray {

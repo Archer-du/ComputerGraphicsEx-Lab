@@ -28,7 +28,7 @@ public:
 
 private:
     bool ReadFromFile(const std::string& file);
-
+    void AddOneTerm(int deg, double cof);
 private:
     std::map<int, double> m_Polynomial; // deg -> cof
 };

@@ -1,39 +1,81 @@
-// implementation of class DArray
-#include "DArray.h"
+#pragma once
 #include <cassert>
 #include <iostream>
 
+// interfaces of Dynamic Array class DArray
+template <class T>
+class DArray {
+public:
+	DArray(); // default constructor
+	DArray(int nSize, T dValue = 0); // set an array with default values
+	DArray(const DArray& arr); // copy constructor
+	~DArray(); // deconstructor
+
+	void Print() const; // print the elements of the array
+
+	int GetSize() const; // get the size of the array
+	void SetSize(int nSize); // set the size of the array
+
+	const T& GetAt(int nIndex) const; // get an element at an index
+	void SetAt(int nIndex, T dValue); // set the value of an element
+
+	T& operator[](int nIndex); // overload operator '[]'
+	const T& operator[](int nIndex) const; // overload operator '[]'
+
+	void PushBack(T dValue); // add a new element at the end of the array
+	void DeleteAt(int nIndex); // delete an element at some index
+	void InsertAt(int nIndex, T dValue); // insert a new element at some index
+
+	DArray& operator = (const DArray& arr); //overload operator '='
+
+private:
+	T* m_pData; // the pointer to the array memory
+	int m_nSize; // the size of the array
+	int m_nMax;
+
+private:
+	void Init(); // initilize the array
+	void Free(); // free the array
+	void Reserve(int nSize); // allocate enough memory
+};
+
+
 // implementation of class DArray
 // default constructor
-DArray::DArray()
+template <class T>
+DArray<T>::DArray()
 {
 	Init();
 }
 
 // set an array with default values
-DArray::DArray(int nSize, double dValue)
+template <class T>
+DArray<T>::DArray(int nSize, T dValue)
 	: m_nSize(nSize) {
 	m_nMax = nSize;
-	m_pData = new double[nSize];
+	m_pData = new T[nSize];
 	for (int i = 0; i < m_nSize; i++) {
 		m_pData[i] = dValue;
 	}
 }
 
-DArray::DArray(const DArray& arr)
-	: m_nSize(arr.m_nSize), m_pData(new double[arr.m_nMax]), m_nMax(arr.m_nMax) {
+template <class T>
+DArray<T>::DArray(const DArray& arr)
+	: m_nSize(arr.m_nSize), m_pData(new T[arr.m_nMax]), m_nMax(arr.m_nMax) {
 	for (int i = 0; i < m_nSize; i++) {
 		m_pData[i] = arr.m_pData[i];
 	}
 }
 
 // deconstructor
-DArray::~DArray() {
+template <class T>
+DArray<T>::~DArray() {
 	Free();
 }
 
 // display the elements of the array
-void DArray::Print() const {
+template <class T>
+void DArray<T>::Print() const {
 	for (int i = 0; i < m_nSize; i++) {
 		std::cout << m_pData[i] << " ";
 	}
@@ -41,23 +83,26 @@ void DArray::Print() const {
 }
 
 // initilize the array
-void DArray::Init() {
+template <class T>
+void DArray<T>::Init() {
 	m_pData = nullptr;
 	m_nMax = m_nSize = 0;
 }
 
 // free the array
-void DArray::Free() {
+template <class T>
+void DArray<T>::Free() {
 	if (m_pData != nullptr)
 		delete[] m_pData;
 	m_pData = nullptr;
 	m_nMax = m_nSize = 0;
 }
 
-void DArray::Reserve(int nSize) {
+template <class T>
+void DArray<T>::Reserve(int nSize) {
 	if (nSize < m_nMax) return;
 	m_nMax = nSize;
-	double* p = new double[nSize];
+	T* p = new T[nSize];
 	for (int i = 0; i < m_nSize; i++) {
 		p[i] = m_pData[i];
 	}
@@ -66,17 +111,19 @@ void DArray::Reserve(int nSize) {
 }
 
 // get the size of the array
-int DArray::GetSize() const {
+template <class T>
+int DArray<T>::GetSize() const {
 	return m_nSize; // you should return a correct value
 }
 
 // set the size of the array
-void DArray::SetSize(int nSize) {
+template <class T>
+void DArray<T>::SetSize(int nSize) {
 	if (nSize == m_nSize) return;
 	if (nSize > m_nSize) {
 		if (nSize > m_nMax) {
 			m_nMax = nSize;
-			double* p = new double[m_nMax];
+			T* p = new T[m_nMax];
 			for (int i = 0; i < m_nSize; i++) {
 				p[i] = m_pData[i];
 			}
@@ -91,32 +138,37 @@ void DArray::SetSize(int nSize) {
 }
 
 // get an element at an index
-const double& DArray::GetAt(int nIndex) const {
+template <class T>
+const T& DArray<T>::GetAt(int nIndex) const {
 	assert(nIndex < m_nSize and nIndex >= 0 and "index out of range");
 	return m_pData[nIndex]; // you should return a correct value
 }
 
 // set the value of an element 
-void DArray::SetAt(int nIndex, double dValue) {
+template <class T>
+void DArray<T>::SetAt(int nIndex, T dValue) {
 	assert(nIndex < m_nSize and nIndex >= 0 and "index out of range");
 	m_pData[nIndex] = dValue;
 }
 
-double& DArray::operator[](int nIndex) {
+template <class T>
+T& DArray<T>::operator[](int nIndex) {
 	assert(nIndex < m_nSize and nIndex >= 0 and "index out of range");
 	return m_pData[nIndex]; // you should return a correct value
 }
 // overload operator '[]'
-const double& DArray::operator[](int nIndex) const {
+template <class T>
+const T& DArray<T>::operator[](int nIndex) const {
 	assert(nIndex < m_nSize and nIndex >= 0 and "index out of range");
 	return m_pData[nIndex]; // you should return a correct value
 }
 
 // add a new element at the end of the array
-void DArray::PushBack(double dValue) {
+template <class T>
+void DArray<T>::PushBack(T dValue) {
 	if (m_nSize + 1 > m_nMax) {
 		m_nMax = m_nMax == 0 ? 1 : m_nMax * 2;
-		double* p = new double[m_nMax];
+		T* p = new T[m_nMax];
 		for (int i = 0; i < m_nSize; i++) {
 			p[i] = m_pData[i];
 		}
@@ -127,7 +179,8 @@ void DArray::PushBack(double dValue) {
 }
 
 // delete an element at some index
-void DArray::DeleteAt(int nIndex) {
+template <class T>
+void DArray<T>::DeleteAt(int nIndex) {
 	assert(nIndex < m_nSize and nIndex >= 0 and "index out of range");
 	for (int i = nIndex + 1; i < m_nSize; i++) {
 		m_pData[i - 1] = m_pData[i];
@@ -136,11 +189,12 @@ void DArray::DeleteAt(int nIndex) {
 }
 
 // insert a new element at some index
-void DArray::InsertAt(int nIndex, double dValue) {
+template <class T>
+void DArray<T>::InsertAt(int nIndex, T dValue) {
 	assert(nIndex <= m_nSize and nIndex >= 0 and "index out of range");
 	if (m_nSize + 1 > m_nMax) {
 		m_nMax = m_nMax == 0 ? 1 : m_nMax * 2;
-		double* p = new double[m_nMax];
+		T* p = new T[m_nMax];
 		int i = 0, j = 0;
 		m_nSize++;
 		while (i < m_nSize) {
@@ -164,10 +218,11 @@ void DArray::InsertAt(int nIndex, double dValue) {
 }
 
 // overload operator '='
-DArray& DArray::operator = (const DArray& arr) {
+template <class T>
+DArray<T>& DArray<T>::operator = (const DArray& arr) {
 	m_nSize = arr.m_nSize;
 	m_nMax = arr.m_nMax;
-	m_pData = new double[arr.m_nMax];
+	m_pData = new T[arr.m_nMax];
 	for (int i = 0; i < m_nSize; i++) {
 		m_pData[i] = arr.m_pData[i];
 	}
