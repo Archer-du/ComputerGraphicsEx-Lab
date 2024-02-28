@@ -16,6 +16,8 @@ class Ellipse : public Shape
         : start_point_x_(start_point_x),
           start_point_y_(start_point_y)
     {
+        end_point_x_ = start_point_x;
+        end_point_y_ = start_point_y;
     }
 
     virtual ~Ellipse() = default;

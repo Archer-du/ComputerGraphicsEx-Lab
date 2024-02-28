@@ -29,6 +29,7 @@ class Canvas : public Component
         kRect = 2,
         kEllipse = 3,
         kPolygon = 4,
+        kFreehand = 5,
     };
 
     // Shape type setters.
@@ -58,6 +59,7 @@ class Canvas : public Component
     void left_click_event();
     void right_click_event();
     void left_drag_event();
+    void left_release_event();
 
     void primitives_update();
     void on_draw_start();

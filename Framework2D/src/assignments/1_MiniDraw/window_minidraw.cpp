@@ -7,6 +7,7 @@ namespace USTC_CG
 MiniDraw::MiniDraw(const std::string& window_name) : Window(window_name)
 {
     p_canvas_ = std::make_shared<Canvas>("Cmpt.Canvas");
+    p_canvas_->set_default();
 }
 
 MiniDraw::~MiniDraw()

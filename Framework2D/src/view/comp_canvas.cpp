@@ -8,6 +8,7 @@
 #include "view/shapes/rect.h"
 #include <view/shapes/ellipse.h>
 #include <view/shapes/polygon.h>
+#include <view/shapes/freehand.h>
 
 namespace USTC_CG
 {
@@ -16,8 +17,10 @@ void Canvas::draw()
     ImGuiIO& io = ImGui::GetIO();
     mousePos = io.MousePos;
 
-    draw_background();
     mouse_poll_event();
+
+    draw_background();
+    draw_shapes();
     if (current_shape_)
     {
         primitives_update();
@@ -27,7 +30,6 @@ void Canvas::draw()
     //mouse_move_event();
     //if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
     //    mouse_release_event();
-    draw_shapes();
 }
 
 void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
@@ -71,7 +73,8 @@ void Canvas::set_polygon()
 //TODO
 void Canvas::set_freehand()
 {
-    //TODO
+    shape_type_ = kFreehand;
+    // TODO
     //draw_status_ = false;
 }
 
@@ -132,12 +135,16 @@ void Canvas::mouse_poll_event()
     }
     if (is_active_ && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
     {
-
+        left_drag_event();
+    }
+    if (is_hovered_ && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+        left_release_event();
     }
 }
 void Canvas::left_click_event()
 {
-    if (!draw_status_)
+    if (!draw_status_ && shape_type_ != kDefault)
     {
         draw_status_ = true;
         on_draw_start();
@@ -154,9 +161,20 @@ void Canvas::right_click_event()
         draw_status_ = false;
         on_draw_stop();
     }
-    else
+}
+void Canvas::left_drag_event()
+{
+    if (current_shape_)
     {
-
+        current_shape_->drag_callback(mousePos.x, mousePos.y);
+    }
+}
+void Canvas::left_release_event()
+{
+    if (draw_status_)
+    {
+        draw_status_ = false;
+        on_draw_stop();
     }
 }
 //void Canvas::mouse_click_event()
@@ -248,6 +266,11 @@ void Canvas::on_draw_start()
         case USTC_CG::Canvas::kPolygon:
         {
             current_shape_ = std::make_shared<Polygon>(mousePos.x, mousePos.y);
+            break;
+        }
+        case USTC_CG::Canvas::kFreehand:
+        {
+            current_shape_ = std::make_shared<FreeHand>(mousePos.x, mousePos.y);
             break;
         }
         default: break;
