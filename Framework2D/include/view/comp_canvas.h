@@ -35,6 +35,9 @@ class Canvas : public Component
     void set_default();
     void set_line();
     void set_rect();
+    void set_ellipse();
+    void set_polygon();
+    void set_freehand();
 
     // Clears all shapes from the canvas.
     void clear_shape_list();
@@ -51,9 +54,14 @@ class Canvas : public Component
     void draw_shapes();
 
     // Event handlers for mouse interactions.
-    void mouse_click_event();
-    void mouse_move_event();
-    void mouse_release_event();
+    void mouse_poll_event();
+    void left_click_event();
+    void right_click_event();
+    void left_drag_event();
+
+    void primitives_update();
+    void on_draw_start();
+    void on_draw_stop();
 
     // Calculates mouse's relative position in the canvas.
     ImVec2 mouse_pos_in_canvas() const;
@@ -74,7 +82,7 @@ class Canvas : public Component
 
     // Current shape being drawn.
     ShapeType shape_type_;
-    ImVec2 start_point_, end_point_;
+    ImVec2 mousePos;
     std::shared_ptr<Shape> current_shape_;
 
     // List of shapes drawn on the canvas.

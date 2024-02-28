@@ -1,26 +1,27 @@
 #pragma once
 
 #include "shape.h"
+#include <imgui.h>
+#include <vector>
 
 namespace USTC_CG
 {
-class Line : public Shape
+class Polygon : public Shape
 {
    public:
-    Line() = default;
+    Polygon() = default;
 
     // Constructor to initialize a line with start and end coordinates
-    Line(
+    Polygon(
         float start_point_x,
         float start_point_y)
-        : start_point_x_(start_point_x),
-          start_point_y_(start_point_y)
     {
-        end_point_x_ = start_point_x;
-        end_point_y_ = start_point_y;
+        vertCoords.reserve(max_vert_num);
+        vertCoords.emplace_back(start_point_x, start_point_y);
+        vertCoords.emplace_back(start_point_x, start_point_y);
     }
 
-    virtual ~Line() = default;
+    virtual ~Polygon() = default;
 
     // Overrides draw function to implement line-specific drawing logic
     void draw(const Config& config) const override;
@@ -29,8 +30,11 @@ class Line : public Shape
     // interaction
     void update(float x, float y) override;
 
+    void click_callback(float x, float y) override;
+
    private:
-    const float start_point_x_, start_point_y_;
-    float end_point_x_, end_point_y_;
+    static const int max_vert_num = 20;
+    //ImVec2 vertCoords[max_vert_num];
+    std::vector<ImVec2> vertCoords;
 };
 }  // namespace USTC_CG

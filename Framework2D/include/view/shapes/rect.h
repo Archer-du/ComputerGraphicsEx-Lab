@@ -12,13 +12,9 @@ class Rect : public Shape
     // Initialize a rectangle with start and end points
     Rect(
         float start_point_x,
-        float start_point_y,
-        float end_point_x,
-        float end_point_y)
+        float start_point_y)
         : start_point_x_(start_point_x),
-          start_point_y_(start_point_y),
-          end_point_x_(end_point_x),
-          end_point_y_(end_point_y)
+          start_point_y_(start_point_y)
     {
     }
 
@@ -34,7 +30,7 @@ class Rect : public Shape
 
    private:
     // Coordinates of the top-left and bottom-right corners of the rectangle
-    float start_point_x_ = 0.0f, start_point_y_ = 0.0f;
+    const float start_point_x_, start_point_y_;
     float end_point_x_ = 0.0f, end_point_y_ = 0.0f;
 };
 }  // namespace USTC_CG
