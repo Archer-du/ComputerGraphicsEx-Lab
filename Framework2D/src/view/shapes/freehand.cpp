@@ -1,11 +1,11 @@
 #include <imgui.h>
 
-#include "view/shapes/polygon.h"
+#include "view/shapes/freehand.h"
 
 namespace USTC_CG
 {
 // Draw the line using ImGui
-void Polygon::draw(const Config& config) const
+void FreeHand::draw(const Config& config) const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
@@ -17,21 +17,14 @@ void Polygon::draw(const Config& config) const
             config.line_color[1],
             config.line_color[2],
             config.line_color[3]),
-        true,
+        false,
         config.line_thickness);
 }
 
-void Polygon::update(float x, float y)
+void FreeHand::drag_callback(float x, float y)
 {
     vertCoords.back().x = x;
     vertCoords.back().y = y;
-}
-
-void Polygon::click_callback(float x, float y)
-{
-    vertCoords.back().x = x;
-    vertCoords.back().y = y;
-    if(vertCoords.size() < max_vert_num) 
-        vertCoords.emplace_back(x, y);
+    vertCoords.emplace_back(x, y);
 }
 }  // namespace USTC_CG

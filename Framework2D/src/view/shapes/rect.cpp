@@ -27,5 +27,4 @@ void Rect::update(float x, float y)
     end_point_x_ = x;
     end_point_y_ = y;
 }
-
 }  // namespace USTC_CG
