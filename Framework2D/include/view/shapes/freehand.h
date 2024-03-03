@@ -14,7 +14,8 @@ class FreeHand : public Shape
     FreeHand() = default;
 
     // Constructor to initialize a line with start and end coordinates
-    FreeHand(float start_point_x, float start_point_y)
+    FreeHand(ImVec4 color, float thickness, float start_point_x, float start_point_y) 
+        : Shape(color, thickness)
     {
         vertCoords.emplace_back(start_point_x, start_point_y);
         vertCoords.emplace_back(start_point_x, start_point_y);
@@ -23,10 +24,9 @@ class FreeHand : public Shape
     virtual ~FreeHand() = default;
 
     // Overrides draw function to implement line-specific drawing logic
-    void draw(const Config& config) const override;
-    void update(float x, float y) override {};
+    void draw(float offset_x, float offset_y) const override;
+    void update(float x, float y) override;
 
-    void drag_callback(float x, float y) override;
    private:
     std::vector<ImVec2> vertCoords;
 };

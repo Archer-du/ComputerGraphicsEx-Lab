@@ -5,20 +5,16 @@
 namespace USTC_CG
 {
 // Draw the line using ImGui
-void Polygon::draw(const Config& config) const
+void Polygon::draw(float offset_x, float offset_y) const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
     draw_list->AddPolyline(
         vertCoords.data(),
         vertCoords.size(),
-        IM_COL32(
-            config.line_color[0],
-            config.line_color[1],
-            config.line_color[2],
-            config.line_color[3]),
+        ImGui::ColorConvertFloat4ToU32(color),
         true,
-        config.line_thickness);
+        thickness);
 }
 
 void Polygon::update(float x, float y)

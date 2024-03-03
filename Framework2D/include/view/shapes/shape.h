@@ -15,6 +15,7 @@ class Shape
         unsigned char line_color[4] = { 255, 0, 0, 255 };
         float line_thickness = 2.0f;
     };
+    bool enable = true;
 
    public:
     virtual ~Shape() = default;
@@ -31,7 +32,7 @@ class Shape
      *               - bias is used to adjust the shape's position on the
      * screen.
      */
-    virtual void draw(const Config& config) const = 0;
+    virtual void draw(float offset_x, float offset_y) const = 0;
     /**
      * Updates the state of the shape.
      * This function allows for dynamic modification of the shape, in response
@@ -42,6 +43,10 @@ class Shape
     virtual void update(float x, float y) = 0;
 
     virtual void click_callback(float x, float y){};
-    virtual void drag_callback(float x, float y){};
+
+protected:
+    Shape(ImVec4 color, float thickness) : color(color), thickness(thickness) { }
+    const ImVec4 color;
+    const float thickness;
 };
 }  // namespace USTC_CG

@@ -12,9 +12,8 @@ class Polygon : public Shape
     Polygon() = default;
 
     // Constructor to initialize a line with start and end coordinates
-    Polygon(
-        float start_point_x,
-        float start_point_y)
+    Polygon(ImVec4 color, float thickness,
+        float start_point_x, float start_point_y) : Shape(color, thickness)
     {
         vertCoords.reserve(max_vert_num);
         vertCoords.emplace_back(start_point_x, start_point_y);
@@ -24,7 +23,7 @@ class Polygon : public Shape
     virtual ~Polygon() = default;
 
     // Overrides draw function to implement line-specific drawing logic
-    void draw(const Config& config) const override;
+    void draw(float offset_x, float offset_y) const override;
 
     // Overrides Shape's update function to adjust the end point during
     // interaction
