@@ -32,7 +32,7 @@ class Shape
      *               - bias is used to adjust the shape's position on the
      * screen.
      */
-    virtual void draw(float offset_x, float offset_y) const = 0;
+    virtual void draw() const = 0;
     /**
      * Updates the state of the shape.
      * This function allows for dynamic modification of the shape, in response
@@ -41,12 +41,20 @@ class Shape
      * @param x, y Dragging point. e.g. end point of a line.
      */
     virtual void update(float x, float y) = 0;
+    void updateOffset(float x, float y)
+    {
+        offset_x += x;
+        offset_y += y;
+    }
 
     virtual void click_callback(float x, float y){};
 
 protected:
     Shape(ImVec4 color, float thickness) : color(color), thickness(thickness) { }
+
     const ImVec4 color;
     const float thickness;
+
+    float offset_x = 0, offset_y = 0;
 };
 }  // namespace USTC_CG

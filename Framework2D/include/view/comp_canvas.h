@@ -18,6 +18,10 @@ class Canvas : public Component
    public:
     // Inherits constructor from Component.
     using Component::Component;
+    Canvas(const std::string& label, ImVec4 color, float thickness)
+        : Component(label),
+          draw_color(color),
+          draw_thickness(thickness) {}
 
     // Override the draw method from the parent Component class.
     void draw() override;
@@ -60,11 +64,6 @@ class Canvas : public Component
     void set_color(ImVec4 color);
     void set_thickness(float thickness);
 
-    void set_tools_pen();
-    void set_tools_eraser();
-    void set_tools_hand();
-    void set_tools_paint();
-
     void undo();
     void redo();
 
@@ -75,6 +74,7 @@ class Canvas : public Component
     // Drawing functions.
     void draw_background();
     void draw_shapes();
+    void draw_context();
 
     // Event handlers for mouse interactions.
     void mouse_poll_event();

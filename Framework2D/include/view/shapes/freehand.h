@@ -24,7 +24,7 @@ class FreeHand : public Shape
     virtual ~FreeHand() = default;
 
     // Overrides draw function to implement line-specific drawing logic
-    void draw(float offset_x, float offset_y) const override;
+    void draw() const override;
     void update(float x, float y) override;
 
    private:

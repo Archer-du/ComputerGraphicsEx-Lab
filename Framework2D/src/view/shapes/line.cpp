@@ -5,7 +5,7 @@
 namespace USTC_CG
 {
 // Draw the line using ImGui
-void Line::draw(float offset_x, float offset_y) const
+void Line::draw() const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 

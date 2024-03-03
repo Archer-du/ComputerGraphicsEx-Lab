@@ -5,13 +5,19 @@
 namespace USTC_CG
 {
 // Draw the line using ImGui
-void FreeHand::draw(float offset_x, float offset_y) const
+void FreeHand::draw() const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
+    std::vector<ImVec2> temp(vertCoords);
+    for (auto& vec : temp)
+    {
+        vec.x += offset_x;
+        vec.y += offset_y;
+    }
 
     draw_list->AddPolyline(
-        vertCoords.data(),
-        vertCoords.size(),
+        temp.data(),
+        temp.size(),
         ImGui::ColorConvertFloat4ToU32(color),
         false,
         thickness);
