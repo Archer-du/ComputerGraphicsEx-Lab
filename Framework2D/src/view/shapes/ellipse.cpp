@@ -6,7 +6,7 @@
 namespace USTC_CG
 {
 // Draw the line using ImGui
-void Ellipse::draw(float offset_x, float offset_y) const
+void Ellipse::draw() const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 

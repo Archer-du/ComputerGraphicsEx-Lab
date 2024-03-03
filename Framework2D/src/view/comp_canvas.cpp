@@ -21,6 +21,10 @@ void Canvas::draw()
 
     draw_background();
     draw_shapes();
+    draw_context();
+
+    if (current_shape_ && shape_type_ == kPolygon)
+        current_shape_->update(mousePos.x, mousePos.y);
 }
 
 void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
@@ -34,63 +38,38 @@ void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
 
 void Canvas::set_color(ImVec4 color)
 {
-    draw_color = color;
 }
 
 void Canvas::set_thickness(float thickness)
-{
-    draw_thickness = thickness;
-}
-
-void Canvas::set_tools_pen()
-{
-}
-
-void Canvas::set_tools_eraser()
-{
-}
-
-void Canvas::set_tools_hand()
-{
-}
-
-void Canvas::set_tools_paint()
 {
 }
 
 void Canvas::undo()
 {
-    // stack empty -- disable
-    // 获取栈顶的操作
+    if (undo_stack.empty()) return;
     Operation op = undo_stack.top();
-    // 弹出栈顶的操作
     undo_stack.pop();
-    // 根据操作的类型执行相反的操作
     switch (op.type)
     {
-        case Insert:  // 如果是插入，就删除
+        case Insert:
             op.shape->enable = false;
             break;
         default: break;
     }
-    // 将操作压入redo栈
     redo_stack.push(op);
 }
 
 void Canvas::redo()
 {
-    // 获取栈顶的操作
+    if (redo_stack.empty()) return;
     Operation op = redo_stack.top();
-    // 弹出栈顶的操作
     redo_stack.pop();
-    // 根据操作的类型重新执行操作
     switch (op.type)
     {
-        case Insert:  // 如果是插入，就插入
+        case Insert:
             op.shape->enable = true;
             break;
     }
-    // 将操作压入undo栈
     undo_stack.push(op);
 }
 
@@ -178,15 +157,41 @@ void Canvas::draw_shapes()
 
     for (const auto& shape : shape_list_)
     {
-        if(shape->enable) shape->draw(scrolling.x, scrolling.y);
+        if(shape->enable) shape->draw();
     }
     if (draw_status_ && current_shape_)
     {
-        current_shape_->draw(scrolling.x, scrolling.y);
+        current_shape_->draw();
     }
     draw_list->PopClipRect();
 }
 
+void Canvas::draw_context()
+{
+    ImVec2 drag_delta =
+        ImGui::GetMouseDragDelta(ImGuiMouseButton_Middle);
+    if (drag_delta.x == 0.0f && drag_delta.y == 0.0f)
+        ImGui::OpenPopupOnItemClick(
+            "context", ImGuiPopupFlags_MouseButtonMiddle);
+    if (ImGui::BeginPopup("context"))
+    {
+        static ImVec4 colf = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::ColorEdit4(
+            "Color",
+            &colf.x,
+            ImGuiColorEditFlags_DisplayRGB |
+                ImGuiColorEditFlags_PickerHueBar |
+                ImGuiColorEditFlags_NoSidePreview);
+
+        static float thickness = 3.0f;
+        ImGui::SliderFloat("thickness", &thickness, 0.5, 10.0);
+
+        draw_color = colf;
+        draw_thickness = thickness;
+
+        ImGui::EndPopup();
+    }
+}
 
 void Canvas::mouse_poll_event()
 {
@@ -225,6 +230,11 @@ void Canvas::left_click_event()
 }
 void Canvas::right_click_event()
 {
+    if (draw_status_)
+    {
+        draw_status_ = false;
+        on_draw_stop();
+    }
 }
 void Canvas::left_drag_event()
 {
@@ -239,6 +249,10 @@ void Canvas::right_drag_event()
     ImGuiIO& io = ImGui::GetIO();
     scrolling.x += io.MouseDelta.x;
     scrolling.y += io.MouseDelta.y;
+    for (const auto& shape : shape_list_)
+    {
+        shape->updateOffset(io.MouseDelta.x, io.MouseDelta.y);
+    }
 }
 void Canvas::left_release_event()
 {
@@ -248,8 +262,6 @@ void Canvas::left_release_event()
         on_draw_stop();
     }
 }
-
-
 
 void Canvas::on_draw_start()
 {

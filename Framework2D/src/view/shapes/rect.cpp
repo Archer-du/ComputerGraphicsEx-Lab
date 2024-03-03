@@ -5,7 +5,7 @@
 namespace USTC_CG
 {
 // Draw the rectangle using ImGui
-void Rect::draw(float offset_x, float offset_y) const
+void Rect::draw() const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
