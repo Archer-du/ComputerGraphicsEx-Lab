@@ -5,21 +5,17 @@
 namespace USTC_CG
 {
 // Draw the rectangle using ImGui
-void Rect::draw(const Config& config) const
+void Rect::draw(float offset_x, float offset_y) const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
     draw_list->AddRect(
-        ImVec2(start_point_x_, start_point_y_),
-        ImVec2(end_point_x_, end_point_y_),
-        IM_COL32(
-            config.line_color[0],
-            config.line_color[1],
-            config.line_color[2],
-            config.line_color[3]),
+        ImVec2(start_point_x_ + offset_x, start_point_y_ + offset_y),
+        ImVec2(end_point_x_ + offset_x, end_point_y_ + offset_y),
+        ImGui::ColorConvertFloat4ToU32(color),
         0.f,  // No rounding of corners
         ImDrawFlags_None,
-        config.line_thickness);
+        thickness);
 }
 
 void Rect::update(float x, float y)

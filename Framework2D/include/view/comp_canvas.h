@@ -7,6 +7,7 @@
 
 #include "shapes/shape.h"
 #include "view/component.h"
+#include <stack>
 
 namespace USTC_CG
 {
@@ -31,6 +32,16 @@ class Canvas : public Component
         kPolygon = 4,
         kFreehand = 5,
     };
+    enum OperateType
+    {
+        Insert
+    };
+
+    struct Operation
+    {
+        std::shared_ptr<Shape> shape;
+        OperateType type;
+    };
 
     // Shape type setters.
     void set_default();
@@ -46,6 +57,17 @@ class Canvas : public Component
     // Set canvas attributes (position and size).
     void set_attributes(const ImVec2& min, const ImVec2& size);
 
+    void set_color(ImVec4 color);
+    void set_thickness(float thickness);
+
+    void set_tools_pen();
+    void set_tools_eraser();
+    void set_tools_hand();
+    void set_tools_paint();
+
+    void undo();
+    void redo();
+
     // Controls the visibility of the canvas background.
     void show_background(bool flag);
 
@@ -59,9 +81,9 @@ class Canvas : public Component
     void left_click_event();
     void right_click_event();
     void left_drag_event();
+    void right_drag_event();
     void left_release_event();
 
-    void primitives_update();
     void on_draw_start();
     void on_draw_stop();
 
@@ -72,7 +94,11 @@ class Canvas : public Component
     ImVec2 canvas_min_;         // Top-left corner of the canvas.
     ImVec2 canvas_max_;         // Bottom-right corner of the canvas.
     ImVec2 canvas_size_;        // Size of the canvas.
+    ImVec2 scrolling;
     bool draw_status_ = false;  // Is the canvas currently being drawn on.
+
+    ImVec4 draw_color;
+    float draw_thickness;
 
     ImVec2 canvas_minimal_size_ = ImVec2(50.f, 50.f);
     ImU32 background_color_ = IM_COL32(50, 50, 50, 255);
@@ -83,12 +109,15 @@ class Canvas : public Component
     bool is_hovered_, is_active_;
 
     // Current shape being drawn.
-    ShapeType shape_type_;
+    ShapeType shape_type_ = kDefault;
     ImVec2 mousePos;
     std::shared_ptr<Shape> current_shape_;
 
     // List of shapes drawn on the canvas.
     std::vector<std::shared_ptr<Shape>> shape_list_;
+
+    std::stack<Operation> undo_stack;
+    std::stack<Operation> redo_stack;
 };
 
 }  // namespace USTC_CG

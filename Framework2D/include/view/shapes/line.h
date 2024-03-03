@@ -10,10 +10,11 @@ class Line : public Shape
     Line() = default;
 
     // Constructor to initialize a line with start and end coordinates
-    Line(
+    Line(ImVec4 color, float thickness,
         float start_point_x,
         float start_point_y)
-        : start_point_x_(start_point_x),
+        : Shape(color, thickness),
+          start_point_x_(start_point_x),
           start_point_y_(start_point_y)
     {
         end_point_x_ = start_point_x;
@@ -23,7 +24,7 @@ class Line : public Shape
     virtual ~Line() = default;
 
     // Overrides draw function to implement line-specific drawing logic
-    void draw(const Config& config) const override;
+    void draw(float offset_x, float offset_y) const override;
 
     // Overrides Shape's update function to adjust the end point during
     // interaction
