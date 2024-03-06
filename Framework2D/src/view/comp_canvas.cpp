@@ -36,14 +36,6 @@ void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
         ImVec2(canvas_min_.x + canvas_size_.x, canvas_min_.y + canvas_size_.y);
 }
 
-void Canvas::set_color(ImVec4 color)
-{
-}
-
-void Canvas::set_thickness(float thickness)
-{
-}
-
 void Canvas::undo()
 {
     if (undo_stack.empty()) return;
@@ -245,7 +237,6 @@ void Canvas::left_drag_event()
 }
 void Canvas::right_drag_event()
 {
-    const float mouse_threshold_for_pan = -1;
     ImGuiIO& io = ImGui::GetIO();
     scrolling.x += io.MouseDelta.x;
     scrolling.y += io.MouseDelta.y;
