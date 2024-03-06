@@ -106,7 +106,7 @@ class Canvas : public Component
     bool show_background_ = true;  // Controls background visibility.
 
     // Mouse interaction status.
-    bool is_hovered_, is_active_;
+    bool is_hovered_ = false, is_active_ = false;
 
     // Current shape being drawn.
     ShapeType shape_type_ = kDefault;

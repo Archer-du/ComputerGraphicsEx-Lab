@@ -123,13 +123,22 @@ void MiniDraw::draw_canvas()
             ImGui::EndMainMenuBar();
         }
 
-        // Canvas component
-        ImGui::Text("Press left mouse to draw, right mouse to stop.");
         // Set the canvas to fill the rest of the window
         const auto& canvas_min = ImGui::GetCursorScreenPos();
         const auto& canvas_size = ImGui::GetContentRegionAvail();
         p_canvas_->set_attributes(canvas_min, canvas_size);
         p_canvas_->draw();
+
+        if (p_image_)
+        {
+            const auto& image_size = p_image_->get_image_size();
+            // Center the image in the window
+            ImVec2 pos = ImVec2(
+                canvas_min.x + canvas_size.x / 2 - image_size.x / 2,
+                canvas_min.y + canvas_size.y / 2 - image_size.y / 2);
+            p_image_->set_position(pos);
+            p_image_->draw();
+        }
     }
 
     ImGui::End();
