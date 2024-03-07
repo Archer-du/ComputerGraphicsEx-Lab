@@ -1,6 +1,7 @@
 #pragma once
 
 #include "view/comp_image.h"
+#include <warp/warp.h>
 
 namespace USTC_CG
 {
@@ -26,6 +27,7 @@ class CompWarping : public ImageEditor
     void init_selections();
 
    private:
+    std::shared_ptr<ImageWarper> warper_;
     // Store the original image data
     std::shared_ptr<Image> back_up_;
     // The selected point couples for image warping

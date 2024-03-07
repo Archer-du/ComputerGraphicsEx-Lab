@@ -1,6 +1,7 @@
 #include "comp_warping.h"
 
 #include <cmath>
+#include <warp/IDW_warp.h>
 
 namespace USTC_CG
 {
@@ -112,7 +113,7 @@ void CompWarping::warping()
     // You can design a class for such warping operations, utilizing the
     // encapsulation, inheritance, and polymorphism features of C++. More files
     // like "*.h", "*.cpp" can be added to this directory or anywhere you like.
-
+    warper_ = std::make_shared<WarperIDW>(data_->width(), data_->height());
     // Create a new image to store the result
     Image warped_image(*data_);
     // Initialize the color of result image
@@ -123,6 +124,7 @@ void CompWarping::warping()
             warped_image.set_pixel(x, y, { 0, 0, 0 });
         }
     }
+    
 
     // Example: (simplified) "fish-eye" warping
     // For each (x, y) from the input image, the "fish-eye" warping transfer it
@@ -134,8 +136,10 @@ void CompWarping::warping()
         for (int x = 0; x < data_->width(); ++x)
         {
             // Apply warping function to (x, y), and we can get (x', y')
-            auto [new_x, new_y] =
-                fisheye_warping(x, y, data_->width(), data_->height());
+            //auto [new_x, new_y] =
+            //    fisheye_warping(x, y, data_->width(), data_->height());
+            auto [new_x, new_y] = warper_->warping(
+                x, y, start_points_.size(), start_points_, end_points_);
             // Copy the color from the original image to the result image
             if (new_x >= 0 && new_x < data_->width() && new_y >= 0 &&
                 new_y < data_->height())
