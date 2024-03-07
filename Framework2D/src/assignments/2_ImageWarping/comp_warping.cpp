@@ -1,7 +1,11 @@
+#include "annoylib.h"
+#include "kissrandom.h"
+
 #include "comp_warping.h"
 
 #include <cmath>
 #include <warp/IDW_warp.h>
+#include <warp/RBF_warp.h>
 
 namespace USTC_CG
 {
@@ -113,7 +117,7 @@ void CompWarping::warping()
     // You can design a class for such warping operations, utilizing the
     // encapsulation, inheritance, and polymorphism features of C++. More files
     // like "*.h", "*.cpp" can be added to this directory or anywhere you like.
-    warper_ = std::make_shared<WarperIDW>(data_->width(), data_->height());
+    warper_ = std::make_shared<WarperRBF>(static_cast<int>(start_points_.size()), start_points_, end_points_);
     // Create a new image to store the result
     Image warped_image(*data_);
     // Initialize the color of result image
@@ -125,30 +129,76 @@ void CompWarping::warping()
         }
     }
     
-
+    Annoy::AnnoyIndex<
+        int,
+        float,
+        Annoy::Euclidean,
+        Annoy::Kiss32Random,
+        Annoy::AnnoyIndexSingleThreadedBuildPolicy>
+        index(2);
+    float i = 0;
     // Example: (simplified) "fish-eye" warping
     // For each (x, y) from the input image, the "fish-eye" warping transfer it
     // to (x', y') in the new image:
     // Note: For this transformation ("fish-eye" warping), one can also
     // calculate the inverse (x', y') -> (x, y) to fill in the "gaps".
-    for (int y = 0; y < data_->height(); ++y)
+    float height = data_->height();
+    float width = data_->width();
+    for (int y = 0; y < height; ++y)
     {
-        for (int x = 0; x < data_->width(); ++x)
+        for (int x = 0; x < width; ++x)
         {
             // Apply warping function to (x, y), and we can get (x', y')
             //auto [new_x, new_y] =
             //    fisheye_warping(x, y, data_->width(), data_->height());
-            auto [new_x, new_y] = warper_->warping(
-                x, y, start_points_.size(), start_points_, end_points_);
+            auto [new_x, new_y] = warper_->warping(x, y);
             // Copy the color from the original image to the result image
-            if (new_x >= 0 && new_x < data_->width() && new_y >= 0 &&
-                new_y < data_->height())
+            if (new_x >= 0 && new_x < width && new_y >= 0 && new_y < height)
             {
                 std::vector<unsigned char> pixel = data_->get_pixel(x, y);
                 warped_image.set_pixel(new_x, new_y, pixel);
+                const float vec[2] = { (2 * new_x - width) / width,
+                                       (2 * new_y - height) / height };
+                index.add_item(i, vec);
+                i++;
             }
         }
     }
+
+    ////ANN 补洞
+    //index.build(4);
+    //for (int y = 0; y < data_->height(); ++y)
+    //{
+    //    for (int x = 0; x < data_->width(); ++x)
+    //    {
+    //        std::vector<unsigned char> pixel = warped_image.get_pixel(x, y);
+    //        if (pixel[0] == 0 and pixel[1] == 0 and pixel[2] == 0)
+    //        {
+    //            float vec[2] = { (2 * x - width) / width,
+    //                             (2 * y - height) / height };
+    //            std::vector<int> closest_items;
+    //            std::vector<float> distances;
+    //            // TODO: config
+    //            size_t sample_num = 4;
+    //            index.get_nns_by_vector(vec, sample_num, -1, &closest_items, &distances);
+    //            //get average
+    //            std::vector<unsigned char> channels(3, 0);
+    //            for (int j = 0; j < sample_num; j++)
+    //            {
+    //                float result[2];
+    //                index.get_item(closest_items[j], result);
+    //                std::vector<unsigned char> sample = warped_image.get_pixel(
+    //                    (result[0] * width + width) / 2,
+    //                    (result[1] * height + height) / 2);
+    //                for (int i = 0; i < 3; i++)
+    //                {
+    //                    channels[i] += sample[i] / sample_num;
+    //                }
+    //            }
+    //            warped_image.set_pixel(x, y, channels);
+    //        }
+    //    }
+    //}
 
     *data_ = std::move(warped_image);
     update();
