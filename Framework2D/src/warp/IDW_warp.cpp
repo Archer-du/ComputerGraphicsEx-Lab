@@ -1,9 +1,7 @@
 #include "warp/IDW_warp.h"
 #include <cmath>
 
-std::pair<int, int> WarperIDW::warping(
-    int x, int y,
-    int n, const std::vector<ImVec2>& starts, const std::vector<ImVec2>& ends) const
+std::pair<int, int> WarperIDW::warping(int x, int y) const
 {
     //TODO: config
     const float u = 1;
@@ -17,22 +15,11 @@ std::pair<int, int> WarperIDW::warping(
     for (int i = 0; i < n; i++)
     {
         float w = sigma(x, y, u, starts[i]) / deno;
-        sum.first += w * (ends[i].x + x - starts[i].x);
-        sum.second += w * (ends[i].y + y - starts[i].y);
+        sum.first += w * (ends[i].x - starts[i].x);
+        sum.second += w * (ends[i].y - starts[i].y);
     }
     return std::pair<int, int>(
-        static_cast<int>(sum.first), static_cast<int>(sum.second));
-}
-
-float WarperIDW::weight(
-    int x,
-    int y,
-    int i,
-    int n,
-    float u,
-    const std::vector<ImVec2>& starts) const
-{
-    return sigma(x, y, u, starts[i]);
+        static_cast<int>(sum.first + x), static_cast<int>(sum.second + y));
 }
 
 float WarperIDW::sigma(int x, int y, float u, ImVec2 p_i) const
