@@ -165,40 +165,40 @@ void CompWarping::warping()
         }
     }
 
-    ////ANN 补洞
-    //index.build(4);
-    //for (int y = 0; y < data_->height(); ++y)
-    //{
-    //    for (int x = 0; x < data_->width(); ++x)
-    //    {
-    //        std::vector<unsigned char> pixel = warped_image.get_pixel(x, y);
-    //        if (pixel[0] == 0 and pixel[1] == 0 and pixel[2] == 0)
-    //        {
-    //            float vec[2] = { (2 * x - width) / width,
-    //                             (2 * y - height) / height };
-    //            std::vector<int> closest_items;
-    //            std::vector<float> distances;
-    //            // TODO: config
-    //            size_t sample_num = 4;
-    //            index.get_nns_by_vector(vec, sample_num, -1, &closest_items, &distances);
-    //            //get average
-    //            std::vector<unsigned char> channels(3, 0);
-    //            for (int j = 0; j < sample_num; j++)
-    //            {
-    //                float result[2];
-    //                index.get_item(closest_items[j], result);
-    //                std::vector<unsigned char> sample = warped_image.get_pixel(
-    //                    (result[0] * width + width) / 2,
-    //                    (result[1] * height + height) / 2);
-    //                for (int i = 0; i < 3; i++)
-    //                {
-    //                    channels[i] += sample[i] / sample_num;
-    //                }
-    //            }
-    //            warped_image.set_pixel(x, y, channels);
-    //        }
-    //    }
-    //}
+    //ANN 补洞
+    index.build(4);
+    for (int y = 0; y < data_->height(); ++y)
+    {
+        for (int x = 0; x < data_->width(); ++x)
+        {
+            std::vector<unsigned char> pixel = warped_image.get_pixel(x, y);
+            if (pixel[0] == 0 and pixel[1] == 0 and pixel[2] == 0)
+            {
+                float vec[2] = { (2 * x - width) / width,
+                                 (2 * y - height) / height };
+                std::vector<int> closest_items;
+                std::vector<float> distances;
+                // TODO: config
+                size_t sample_num = 4;
+                index.get_nns_by_vector(vec, sample_num, -1, &closest_items, &distances);
+                //get average
+                std::vector<unsigned char> channels(3, 0);
+                for (int j = 0; j < sample_num; j++)
+                {
+                    float result[2];
+                    index.get_item(closest_items[j], result);
+                    std::vector<unsigned char> sample = warped_image.get_pixel(
+                        (result[0] * width + width) / 2,
+                        (result[1] * height + height) / 2);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        channels[i] += sample[i] / sample_num;
+                    }
+                }
+                warped_image.set_pixel(x, y, channels);
+            }
+        }
+    }
 
     *data_ = std::move(warped_image);
     update();
