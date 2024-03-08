@@ -38,9 +38,9 @@ void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
 
 void Canvas::undo()
 {
-    if (undo_stack.empty()) return;
-    Operation op = undo_stack.top();
-    undo_stack.pop();
+    if (undo_stack_.empty()) return;
+    Operation op = undo_stack_.top();
+    undo_stack_.pop();
     switch (op.type)
     {
         case Insert:
@@ -48,21 +48,22 @@ void Canvas::undo()
             break;
         default: break;
     }
-    redo_stack.push(op);
+    redo_stack_.push(op);
 }
 
 void Canvas::redo()
 {
-    if (redo_stack.empty()) return;
-    Operation op = redo_stack.top();
-    redo_stack.pop();
+    if (redo_stack_.empty()) return;
+    Operation op = redo_stack_.top();
+    redo_stack_.pop();
     switch (op.type)
     {
         case Insert:
             op.shape->enable = true;
             break;
+        default: break;
     }
-    undo_stack.push(op);
+    undo_stack_.push(op);
 }
 
 void Canvas::show_background(bool flag)
@@ -100,6 +101,11 @@ void Canvas::set_freehand()
     shape_type_ = kFreehand;
 }
 
+void Canvas::set_image(std::string label, std::string path)
+{
+    p_image_ = std::make_shared<ImageEditor>(label, path);
+}
+
 void Canvas::clear_shape_list()
 {
     shape_list_.clear();
@@ -134,18 +140,29 @@ void Canvas::draw_shapes()
     // ClipRect can hide the drawing content outside of the rectangular area
     draw_list->PushClipRect(canvas_min_, canvas_max_, true);
     const float GRID_STEP = 64.0f;
-    for (float x = fmodf(scrolling.x, GRID_STEP); x < canvas_size_.x;
+    for (float x = fmodf(scrolling_.x, GRID_STEP); x < canvas_size_.x;
             x += GRID_STEP)
         draw_list->AddLine(
             ImVec2(canvas_min_.x + x, canvas_min_.y),
             ImVec2(canvas_min_.x + x, canvas_max_.y),
             IM_COL32(200, 200, 200, 40));
-    for (float y = fmodf(scrolling.y, GRID_STEP); y < canvas_size_.y;
+    for (float y = fmodf(scrolling_.y, GRID_STEP); y < canvas_size_.y;
             y += GRID_STEP)
         draw_list->AddLine(
             ImVec2(canvas_min_.x, canvas_min_.y + y),
             ImVec2(canvas_max_.x, canvas_min_.y + y),
             IM_COL32(200, 200, 200, 40));
+
+    if (p_image_)
+    {
+        const auto& image_size = p_image_->get_image_size();
+        // Center the image in the window
+        ImVec2 pos = ImVec2(
+            canvas_min_.x + canvas_size_.x / 2 - image_size.x / 2 + scrolling_.x,
+            canvas_min_.y + canvas_size_.y / 2 - image_size.y / 2 + scrolling_.y);
+        p_image_->set_position(pos);
+        p_image_->draw();
+    }
 
     for (const auto& shape : shape_list_)
     {
@@ -178,8 +195,8 @@ void Canvas::draw_context()
         static float thickness = 3.0f;
         ImGui::SliderFloat("thickness", &thickness, 0.5, 10.0);
 
-        draw_color = colf;
-        draw_thickness = thickness;
+        draw_color_ = colf;
+        draw_thickness_ = thickness;
 
         ImGui::EndPopup();
     }
@@ -238,8 +255,8 @@ void Canvas::left_drag_event()
 void Canvas::right_drag_event()
 {
     ImGuiIO& io = ImGui::GetIO();
-    scrolling.x += io.MouseDelta.x;
-    scrolling.y += io.MouseDelta.y;
+    scrolling_.x += io.MouseDelta.x;
+    scrolling_.y += io.MouseDelta.y;
     for (const auto& shape : shape_list_)
     {
         shape->updateOffset(io.MouseDelta.x, io.MouseDelta.y);
@@ -265,31 +282,31 @@ void Canvas::on_draw_start()
         case USTC_CG::Canvas::kLine:
         {
             current_shape_ = std::make_shared<Line>(
-                draw_color, draw_thickness, mousePos.x, mousePos.y);
+                draw_color_, draw_thickness_, mousePos.x, mousePos.y);
             break;
         }
         case USTC_CG::Canvas::kRect:
         {
             current_shape_ = std::make_shared<Rect>(
-                draw_color, draw_thickness, mousePos.x, mousePos.y);
+                draw_color_, draw_thickness_, mousePos.x, mousePos.y);
             break;
         }
         case USTC_CG::Canvas::kEllipse:
         {
             current_shape_ = std::make_shared<Ellipse>(
-                draw_color, draw_thickness, mousePos.x, mousePos.y);
+                draw_color_, draw_thickness_, mousePos.x, mousePos.y);
             break;
         }
         case USTC_CG::Canvas::kPolygon:
         {
             current_shape_ = std::make_shared<Polygon>(
-                draw_color, draw_thickness, mousePos.x, mousePos.y);
+                draw_color_, draw_thickness_, mousePos.x, mousePos.y);
             break;
         }
         case USTC_CG::Canvas::kFreehand:
         {
             current_shape_ = std::make_shared<FreeHand>(
-                draw_color, draw_thickness, mousePos.x, mousePos.y);
+                draw_color_, draw_thickness_, mousePos.x, mousePos.y);
             break;
         }
         default: break;
@@ -301,14 +318,17 @@ void Canvas::on_draw_stop()
     if (current_shape_)
     {
         shape_list_.push_back(current_shape_);
-        undo_stack.push({ current_shape_, Insert });
-        while (!redo_stack.empty())
+        undo_stack_.push({ current_shape_, Insert });
+        while (!redo_stack_.empty())
         {
-            redo_stack.pop();
+            redo_stack_.pop();
         }
         current_shape_.reset();
     }
 }
+
+
+
 
 
 

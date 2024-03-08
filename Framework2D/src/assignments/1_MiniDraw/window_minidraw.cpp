@@ -19,16 +19,7 @@ MiniDraw::~MiniDraw()
 void MiniDraw::draw()
 {
     draw_canvas();
-    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Z)) &&
-            ImGui::GetIO().KeyCtrl)
-    {
-        p_canvas_->undo();
-    }
-    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Y)) &&
-            ImGui::GetIO().KeyCtrl)
-    {
-        p_canvas_->redo();
-    }
+    keyboard_event();
 }
 
 void MiniDraw::draw_canvas()
@@ -53,13 +44,14 @@ void MiniDraw::draw_canvas()
                 std::string filePathName =
                     ImGuiFileDialog::Instance()->GetFilePathName();
                 std::string label = filePathName;
-                p_image_ = std::make_shared<Image>(label, filePathName);
+                p_canvas_->set_image(label, filePathName);
                 p_canvas_->clear_shape_list();
             }
             ImGuiFileDialog::Instance()->Close();
             flag_open_file_dialog_ = false;
         }
     }
+
     if (ImGui::Begin(
             "Canvas",
             &flag_show_canvas_view_,
@@ -128,20 +120,23 @@ void MiniDraw::draw_canvas()
         const auto& canvas_size = ImGui::GetContentRegionAvail();
         p_canvas_->set_attributes(canvas_min, canvas_size);
         p_canvas_->draw();
-
-        if (p_image_)
-        {
-            const auto& image_size = p_image_->get_image_size();
-            // Center the image in the window
-            ImVec2 pos = ImVec2(
-                canvas_min.x + canvas_size.x / 2 - image_size.x / 2,
-                canvas_min.y + canvas_size.y / 2 - image_size.y / 2);
-            p_image_->set_position(pos);
-            p_image_->draw();
-        }
     }
 
     ImGui::End();
-
 }
+
+void MiniDraw::keyboard_event()
+{
+    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Z)) &&
+        ImGui::GetIO().KeyCtrl)
+    {
+        p_canvas_->undo();
+    }
+    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Y)) &&
+        ImGui::GetIO().KeyCtrl)
+    {
+        p_canvas_->redo();
+    }
+}
+
 }  // namespace USTC_CG
