@@ -8,6 +8,7 @@
 #include "shapes/shape.h"
 #include "view/component.h"
 #include <stack>
+#include "comp_image.h"
 
 namespace USTC_CG
 {
@@ -20,8 +21,8 @@ class Canvas : public Component
     using Component::Component;
     Canvas(const std::string& label, ImVec4 color, float thickness)
         : Component(label),
-          draw_color(color),
-          draw_thickness(thickness) {}
+          draw_color_(color),
+          draw_thickness_(thickness) {}
 
     // Override the draw method from the parent Component class.
     void draw() override;
@@ -55,14 +56,13 @@ class Canvas : public Component
     void set_polygon();
     void set_freehand();
 
+    void set_image(std::string label, std::string path);
+
     // Clears all shapes from the canvas.
     void clear_shape_list();
 
     // Set canvas attributes (position and size).
     void set_attributes(const ImVec2& min, const ImVec2& size);
-
-    void set_color(ImVec4 color);
-    void set_thickness(float thickness);
 
     void undo();
     void redo();
@@ -94,11 +94,11 @@ class Canvas : public Component
     ImVec2 canvas_min_;         // Top-left corner of the canvas.
     ImVec2 canvas_max_;         // Bottom-right corner of the canvas.
     ImVec2 canvas_size_;        // Size of the canvas.
-    ImVec2 scrolling;
+    ImVec2 scrolling_;
     bool draw_status_ = false;  // Is the canvas currently being drawn on.
 
-    ImVec4 draw_color;
-    float draw_thickness;
+    ImVec4 draw_color_;
+    float draw_thickness_;
 
     ImVec2 canvas_minimal_size_ = ImVec2(50.f, 50.f);
     ImU32 background_color_ = IM_COL32(50, 50, 50, 255);
@@ -116,8 +116,10 @@ class Canvas : public Component
     // List of shapes drawn on the canvas.
     std::vector<std::shared_ptr<Shape>> shape_list_;
 
-    std::stack<Operation> undo_stack;
-    std::stack<Operation> redo_stack;
+    std::shared_ptr<ImageEditor> p_image_;
+
+    std::stack<Operation> undo_stack_;
+    std::stack<Operation> redo_stack_;
 };
 
 }  // namespace USTC_CG
