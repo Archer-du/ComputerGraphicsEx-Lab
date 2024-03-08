@@ -9,6 +9,12 @@ namespace USTC_CG
 class CompWarping : public ImageEditor
 {
    public:
+    enum class WarperType
+    {
+        IDW = 0,
+        RBF = 1
+    };
+
     explicit CompWarping(const std::string& label, const std::string& filename);
     virtual ~CompWarping() noexcept = default;
 
@@ -18,13 +24,18 @@ class CompWarping : public ImageEditor
     void invert();
     void mirror(bool is_horizontal, bool is_vertical);
     void gray_scale();
-    void warping();
+    void warping(WarperType type);
     void restore();
 
     // Point selecting interaction
     void enable_selecting(bool flag);
     void select_points();
     void init_selections();
+
+    void set_idw_mu(float mu);
+    void set_rbf_sigma(float sigma);
+    void set_ann_sample_num(int num);
+    void set_ann_index_tree_num(int num);
 
    private:
     std::shared_ptr<ImageWarper> warper_;
@@ -38,7 +49,11 @@ class CompWarping : public ImageEditor
     bool draw_status_ = false;
 
    private:
-    // A simple "fish-eye" warping function
+    float idw_mu = 1;
+    float rbf_sigma = 10;
+    float ann_sample_num = 4;
+    float ann_index_tree_num = 2;
+    // legacy: A simple "fish-eye" warping function
     std::pair<int, int> fisheye_warping(int x, int y, int width, int height);
 };
 

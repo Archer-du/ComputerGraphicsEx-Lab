@@ -5,8 +5,10 @@
 WarperRBF::WarperRBF(
     int n,
     const std::vector<ImVec2>& starts,
-    const std::vector<ImVec2>& ends)
-    : ImageWarper(n, starts, ends)
+    const std::vector<ImVec2>& ends, 
+    float sigma)
+    : ImageWarper(n, starts, ends),
+      sigma(sigma)
 {
     // left
     Eigen::SparseMatrix<float> A(n + 3, n + 3);
@@ -57,7 +59,6 @@ WarperRBF::WarperRBF(
         return;
     }
 
-    // 求解线性方程组，得到变换函数的参数
     coef = solver.solve(b);
 
     // 检查求解是否成功
