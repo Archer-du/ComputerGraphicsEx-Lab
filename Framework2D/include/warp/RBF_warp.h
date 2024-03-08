@@ -10,24 +10,18 @@ class WarperRBF : public ImageWarper
     WarperRBF(
         int n,
         const std::vector<ImVec2>& starts,
-        const std::vector<ImVec2>& ends);
+        const std::vector<ImVec2>& ends, 
+        float sigma);
 
     std::pair<int, int> warping(int x, int y) const override;
 
    private:
-    inline float euclidean_distance(const ImVec2& p1, const ImVec2& p2) const
-    {
-        return std::sqrt(
-            (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
-    }
-
     inline float radial_basis_function(float d, float c) const
     {
-        //return std::exp(-d * d / (2 * c * c));
-        return std::sqrt(d * d + 256 * 256);
+        return std::sqrt(d * d + c * c);
     }
 
    private:
-    const float sigma = 1;
+    const float sigma;
     Eigen::SparseMatrix<float> coef;
 };

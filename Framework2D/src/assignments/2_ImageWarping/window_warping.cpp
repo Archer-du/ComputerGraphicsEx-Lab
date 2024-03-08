@@ -69,11 +69,43 @@ void ImageWarping::draw_toolbar()
             p_image_->init_selections();
             p_image_->enable_selecting(true);
         }
-        if (ImGui::MenuItem("Warping") && p_image_)
+        if (ImGui::BeginMenu("Warping"))
         {
-            p_image_->enable_selecting(false);
-            p_image_->warping();
-            p_image_->init_selections();
+            if (ImGui::CollapsingHeader("IDW config                                 "))
+            {
+                static float mu = 3.0f;
+                ImGui::SliderFloat("mu", &mu, 1, 4.0);
+                p_image_->set_idw_mu(mu);
+            }
+            if (ImGui::CollapsingHeader("RBF config"))
+            {
+                static float sigma = 10;
+                ImGui::SliderFloat("sigma", &sigma, 10, 80);
+                p_image_->set_rbf_sigma(sigma);
+            }
+            if (ImGui::CollapsingHeader("ANN inpaint config"))
+            {
+                static int sample_num = 4;
+                static int tree_num = 4;
+                ImGui::SliderInt("sample num", &sample_num, 1, 10);
+                ImGui::SliderInt("index tree num", &tree_num, 1, 10);
+                p_image_->set_ann_sample_num(sample_num);
+                p_image_->set_ann_index_tree_num(tree_num);
+            }
+            if (ImGui::Button("IDW warp") && p_image_)
+            {
+                p_image_->enable_selecting(false);
+                p_image_->warping(CompWarping::WarperType::IDW);
+                p_image_->init_selections();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("RBF warp") && p_image_)
+            {
+                p_image_->enable_selecting(false);
+                p_image_->warping(CompWarping::WarperType::RBF);
+                p_image_->init_selections();
+            }
+            ImGui::EndMenu();
         }
         // HW2_TODO: You can add more interactions for IDW, RBF, etc.
         ImGui::Separator();

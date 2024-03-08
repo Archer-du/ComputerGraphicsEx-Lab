@@ -110,14 +110,34 @@ void CompWarping::gray_scale()
     // After change the image, we should reload the image data to the renderer
     update();
 }
-void CompWarping::warping()
+
+void CompWarping::warping(WarperType type)
 {
     // HW2_TODO: You should implement your own warping function that interpolate
     // the selected points.
     // You can design a class for such warping operations, utilizing the
     // encapsulation, inheritance, and polymorphism features of C++. More files
     // like "*.h", "*.cpp" can be added to this directory or anywhere you like.
-    warper_ = std::make_shared<WarperRBF>(static_cast<int>(start_points_.size()), start_points_, end_points_);
+    int n = start_points_.size();
+    if (n <= 0) return;
+
+    switch (type)
+    {
+        case WarperType::IDW:
+        {
+            warper_ = std::make_shared<WarperIDW>
+                (n, start_points_, end_points_, idw_mu);
+            break;
+        }
+        case WarperType::RBF:
+        {
+            warper_ = std::make_shared<WarperRBF>
+                (n, start_points_, end_points_, rbf_sigma);
+            break;
+        }
+        default: break;
+    }
+
     // Create a new image to store the result
     Image warped_image(*data_);
     // Initialize the color of result image
@@ -137,6 +157,7 @@ void CompWarping::warping()
         Annoy::AnnoyIndexSingleThreadedBuildPolicy>
         index(2);
     float i = 0;
+
     // Example: (simplified) "fish-eye" warping
     // For each (x, y) from the input image, the "fish-eye" warping transfer it
     // to (x', y') in the new image:
@@ -149,14 +170,13 @@ void CompWarping::warping()
         for (int x = 0; x < width; ++x)
         {
             // Apply warping function to (x, y), and we can get (x', y')
-            //auto [new_x, new_y] =
-            //    fisheye_warping(x, y, data_->width(), data_->height());
             auto [new_x, new_y] = warper_->warping(x, y);
             // Copy the color from the original image to the result image
             if (new_x >= 0 && new_x < width && new_y >= 0 && new_y < height)
             {
                 std::vector<unsigned char> pixel = data_->get_pixel(x, y);
                 warped_image.set_pixel(new_x, new_y, pixel);
+
                 const float vec[2] = { (2 * new_x - width) / width,
                                        (2 * new_y - height) / height };
                 index.add_item(i, vec);
@@ -166,7 +186,8 @@ void CompWarping::warping()
     }
 
     //ANN 补洞
-    index.build(4);
+    index.build(ann_index_tree_num);
+
     for (int y = 0; y < data_->height(); ++y)
     {
         for (int x = 0; x < data_->width(); ++x)
@@ -178,12 +199,10 @@ void CompWarping::warping()
                                  (2 * y - height) / height };
                 std::vector<int> closest_items;
                 std::vector<float> distances;
-                // TODO: config
-                size_t sample_num = 4;
-                index.get_nns_by_vector(vec, sample_num, -1, &closest_items, &distances);
+                index.get_nns_by_vector(vec, ann_sample_num, -1, &closest_items, &distances);
                 //get average
                 std::vector<unsigned char> channels(3, 0);
-                for (int j = 0; j < sample_num; j++)
+                for (int j = 0; j < ann_sample_num; j++)
                 {
                     float result[2];
                     index.get_item(closest_items[j], result);
@@ -192,7 +211,7 @@ void CompWarping::warping()
                         (result[1] * height + height) / 2);
                     for (int i = 0; i < 3; i++)
                     {
-                        channels[i] += sample[i] / sample_num;
+                        channels[i] += sample[i] / ann_sample_num;
                     }
                 }
                 warped_image.set_pixel(x, y, channels);
@@ -268,6 +287,29 @@ void CompWarping::init_selections()
     end_points_.clear();
 }
 
+void CompWarping::set_idw_mu(float mu)
+{
+    idw_mu = mu;
+}
+
+void CompWarping::set_rbf_sigma(float sigma)
+{
+    rbf_sigma = sigma;
+}
+
+void CompWarping::set_ann_sample_num(int num)
+{
+    ann_sample_num = num;
+}
+void CompWarping::set_ann_index_tree_num(int num)
+{
+    ann_index_tree_num = num;
+}
+
+
+
+
+//legacy
 std::pair<int, int>
 CompWarping::fisheye_warping(int x, int y, int width, int height)
 {
