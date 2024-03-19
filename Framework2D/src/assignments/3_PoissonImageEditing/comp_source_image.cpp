@@ -13,8 +13,11 @@ CompSourceImage::CompSourceImage(
     : ImageEditor(label, filename)
 {
     if (data_)
+    {
         selected_region_ =
             std::make_shared<Image>(data_->width(), data_->height(), 1);
+        decomposer_ = std::make_shared<Predecomposer>(selected_region_);
+    }
 }
 
 void CompSourceImage::draw()
@@ -47,6 +50,7 @@ void CompSourceImage::select_region()
     // also consider using the implementation in HW1. (We use rectangle for
     // example)
     ImGuiIO& io = ImGui::GetIO();
+    std::vector<ImVec2> rel_points;
     if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
         draw_status_ = true;
@@ -55,6 +59,7 @@ void CompSourceImage::select_region()
                 io.MousePos.x - position_.x, 0, (float)image_width_),
             std::clamp<float>(
                 io.MousePos.y - position_.y, 0, (float)image_height_));
+        rel_points.push_back(start_);
     }
     if (draw_status_)
     {
@@ -63,6 +68,8 @@ void CompSourceImage::select_region()
                 io.MousePos.x - position_.x, 0, (float)image_width_),
             std::clamp<float>(
                 io.MousePos.y - position_.y, 0, (float)image_height_));
+        rel_points.push_back(end_);
+        // 选区结束
         if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
             draw_status_ = false;
@@ -97,6 +104,7 @@ void CompSourceImage::select_region()
                 }
                 default: break;
             }
+            decomposer_->solve();
         }
     }
 

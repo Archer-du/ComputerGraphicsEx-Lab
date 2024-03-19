@@ -2,6 +2,7 @@
 
 #include "comp_source_image.h"
 #include "view/comp_image.h"
+#include "seamless_clone.h"
 
 namespace USTC_CG
 {
@@ -35,6 +36,7 @@ class CompTargetImage : public ImageEditor
     void clone();
 
    private:
+    std::shared_ptr<SeamlessCloner> cloner_;
     // Store the original image data
     std::shared_ptr<Image> back_up_;
     // Source image

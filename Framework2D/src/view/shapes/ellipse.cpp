@@ -12,8 +12,8 @@ void Ellipse::draw() const
 
     draw_list->AddEllipse(
         ImVec2(
-            (start_point_x_ + end_point_x_) / 2 + offset_x,
-            (start_point_y_ + end_point_y_) / 2 + offset_y),
+            (start_point_x_ + end_point_x_) / 2 + offset_x_,
+            (start_point_y_ + end_point_y_) / 2 + offset_y_),
         fabsf((end_point_x_ - start_point_x_)) / 2,
         fabsf((end_point_y_ - start_point_y_)) / 2,
         ImGui::ColorConvertFloat4ToU32(color),

@@ -2,6 +2,10 @@
 
 #include <cmath>
 
+#include <Eigen/Sparse>
+#include <Eigen/SparseLU>
+#include <seamless_clone.h>
+
 namespace USTC_CG
 {
 using uchar = unsigned char;
@@ -12,7 +16,10 @@ CompTargetImage::CompTargetImage(
     : ImageEditor(label, filename)
 {
     if (data_)
+    {
         back_up_ = std::make_shared<Image>(*data_);
+        cloner_ = std::make_shared<SeamlessCloner>();
+    }
 }
 
 void CompTargetImage::draw()
@@ -96,16 +103,17 @@ void CompTargetImage::clone()
         {
             restore();
 
+            int offset_x_ = static_cast<int>(mouse_position_.x) -
+                           static_cast<int>(source_image_->get_position().x);
+            int offset_y_ = static_cast<int>(mouse_position_.y) -
+                           static_cast<int>(source_image_->get_position().y);
+
             for (int i = 0; i < mask->width(); ++i)
             {
                 for (int j = 0; j < mask->height(); ++j)
                 {
-                    int tar_x =
-                        static_cast<int>(mouse_position_.x) + i -
-                        static_cast<int>(source_image_->get_position().x);
-                    int tar_y =
-                        static_cast<int>(mouse_position_.y) + j -
-                        static_cast<int>(source_image_->get_position().y);
+                    int tar_x = offset_x_ + i;
+                    int tar_y = offset_y_ + j;
                     if (0 <= tar_x && tar_x < image_width_ && 0 <= tar_y &&
                         tar_y < image_height_ && mask->get_pixel(i, j)[0] > 0)
                     {
@@ -125,23 +133,31 @@ void CompTargetImage::clone()
             // final RGB color by solving Poisson Equations.
             restore();
 
+            int offset_x_ = static_cast<int>(mouse_position_.x) -
+                           static_cast<int>(source_image_->get_position().x);
+            int offset_y_ = static_cast<int>(mouse_position_.y) -
+                           static_cast<int>(source_image_->get_position().y);
+
+            cloner_->set_source_image(source_image_->get_data());
+            cloner_->set_target_image(data_);
+            cloner_->set_decomposer(source_image_->get_predecomposer());
+            cloner_->set_offset(offset_x_, offset_y_);
+
+            cloner_->solve();
+
             for (int i = 0; i < mask->width(); ++i)
             {
                 for (int j = 0; j < mask->height(); ++j)
                 {
-                    int tar_x =
-                        static_cast<int>(mouse_position_.x) + i -
-                        static_cast<int>(source_image_->get_position().x);
-                    int tar_y =
-                        static_cast<int>(mouse_position_.y) + j -
-                        static_cast<int>(source_image_->get_position().y);
+                    int tar_x = offset_x_ + i;
+                    int tar_y = offset_y_ + j;
                     if (0 <= tar_x && tar_x < image_width_ && 0 <= tar_y &&
                         tar_y < image_height_ && mask->get_pixel(i, j)[0] > 0)
                     {
                         data_->set_pixel(
                             tar_x,
                             tar_y,
-                            source_image_->get_data()->get_pixel(i, j));
+                            cloner_->get_pixel(i, j, data_->channels()));
                     }
                 }
             }

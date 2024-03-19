@@ -12,8 +12,8 @@ void Polygon::draw() const
     std::vector<ImVec2> temp(vertCoords);
     for (auto& vec : temp)
     {
-        vec.x += offset_x;
-        vec.y += offset_y;
+        vec.x += offset_x_;
+        vec.y += offset_y_;
     }
 
     draw_list->AddPolyline(

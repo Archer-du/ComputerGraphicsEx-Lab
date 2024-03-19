@@ -43,8 +43,8 @@ class Shape
     virtual void update(float x, float y) = 0;
     void updateOffset(float x, float y)
     {
-        offset_x += x;
-        offset_y += y;
+        offset_x_ += x;
+        offset_y_ += y;
     }
 
     virtual void click_callback(float x, float y){};
@@ -55,6 +55,6 @@ protected:
     const ImVec4 color;
     const float thickness;
 
-    float offset_x = 0, offset_y = 0;
+    float offset_x_ = 0, offset_y_ = 0;
 };
 }  // namespace USTC_CG

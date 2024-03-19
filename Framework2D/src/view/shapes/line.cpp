@@ -10,8 +10,8 @@ void Line::draw() const
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
     draw_list->AddLine(
-        ImVec2(start_point_x_ + offset_x, start_point_y_ + offset_y),
-        ImVec2(end_point_x_ + offset_x, end_point_y_ + offset_y),
+        ImVec2(start_point_x_ + offset_x_, start_point_y_ + offset_y_),
+        ImVec2(end_point_x_ + offset_x_, end_point_y_ + offset_y_),
         ImGui::ColorConvertFloat4ToU32(color),
         thickness);
 }

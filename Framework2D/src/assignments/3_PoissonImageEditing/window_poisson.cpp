@@ -88,6 +88,10 @@ void WindowPoisson::draw_toolbar()
         {
             p_target_->set_paste();
         }
+        if (ImGui::MenuItem("Seamless Clone") && p_target_ && p_source_)
+        {
+            p_target_->set_seamless();
+        }
         add_tooltips(
             "Press this button and then click in the target image, to "
             "clone the selected region to the target image.");
