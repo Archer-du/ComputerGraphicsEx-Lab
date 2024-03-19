@@ -69,11 +69,11 @@ void ImageWarping::draw_toolbar()
             p_image_->init_selections();
             p_image_->enable_selecting(true);
         }
-        if (ImGui::BeginMenu("Warping"))
+        if (ImGui::BeginMenu("Warping", p_image_ != nullptr))
         {
             if (ImGui::CollapsingHeader("IDW config                                 "))
             {
-                static float mu = 3.0f;
+                static float mu = 1.0f;
                 ImGui::SliderFloat("mu", &mu, 1, 4.0);
                 p_image_->set_idw_mu(mu);
             }
@@ -92,14 +92,14 @@ void ImageWarping::draw_toolbar()
                 p_image_->set_ann_sample_num(sample_num);
                 p_image_->set_ann_index_tree_num(tree_num);
             }
-            if (ImGui::Button("IDW warp") && p_image_)
+            if (ImGui::Button("IDW warp"))
             {
                 p_image_->enable_selecting(false);
                 p_image_->warping(CompWarping::WarperType::IDW);
                 p_image_->init_selections();
             }
             ImGui::SameLine();
-            if (ImGui::Button("RBF warp") && p_image_)
+            if (ImGui::Button("RBF warp"))
             {
                 p_image_->enable_selecting(false);
                 p_image_->warping(CompWarping::WarperType::RBF);

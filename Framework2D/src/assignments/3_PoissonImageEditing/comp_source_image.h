@@ -1,5 +1,6 @@
 #pragma once
 
+#include "predecomposer.h"
 #include "view/comp_image.h"
 
 namespace USTC_CG
@@ -31,9 +32,12 @@ class CompSourceImage : public ImageEditor
     // Get the position to locate the region in the target image
     ImVec2 get_position() const;
 
+    inline std::shared_ptr<Predecomposer> get_predecomposer() { return decomposer_; }
+
    private:
     RegionType region_type_ = kRect;
     std::shared_ptr<Image> selected_region_;
+    std::shared_ptr<Predecomposer> decomposer_;
     ImVec2 start_, end_;
     bool flag_enable_selecting_region_ = false;
     bool draw_status_ = false;
