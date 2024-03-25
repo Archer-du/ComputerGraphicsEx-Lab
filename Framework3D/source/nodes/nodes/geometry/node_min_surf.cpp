@@ -156,7 +156,6 @@ static void node_min_surf_cot_exec(ExeParams params)
     if (!input.get_component<MeshComponent>() || !input_o.get_component<MeshComponent>()) {
         throw std::runtime_error("Minimal Surface: Need Geometry Input.");
     }
-    /* ----------------------------- Preprocess ------------------------------- */
     auto halfedge_mesh = operand_to_openmesh(&input);
     auto origin_mesh = operand_to_openmesh(&input_o);
 
@@ -172,18 +171,18 @@ static void node_min_surf_cot_exec(ExeParams params)
             for (const auto& out_halfedge : vertex_handle.outgoing_halfedges()) {
                 double weight = 0.0;
                 int neighbor_idx = out_halfedge.to().idx();
-                auto v1_index = out_halfedge.prev().from().idx();
-                auto v2_index = out_halfedge.opp().next().to().idx();
+                auto vi_idx = out_halfedge.prev().from().idx();
+                auto vj_idx = out_halfedge.opp().next().to().idx();
 
                 auto pos_self = origin_mesh->point(origin_mesh->vertex_handle(idx));
                 auto pos_neighbor = origin_mesh->point(origin_mesh->vertex_handle(neighbor_idx));
-                auto pos_1 = origin_mesh->point(origin_mesh->vertex_handle(v1_index));
-                auto pos_2 = origin_mesh->point(origin_mesh->vertex_handle(v2_index));
+                auto i_pos = origin_mesh->point(origin_mesh->vertex_handle(vi_idx));
+                auto j_pos = origin_mesh->point(origin_mesh->vertex_handle(vj_idx));
 
-                auto vec_1_1 = pos_self - pos_1;
-                auto vec_1_2 = pos_neighbor - pos_1;
-                auto vec_2_1 = pos_self - pos_2;
-                auto vec_2_2 = pos_neighbor - pos_2;
+                auto vec_1_1 = pos_self - i_pos;
+                auto vec_1_2 = pos_neighbor - i_pos;
+                auto vec_2_1 = pos_self - j_pos;
+                auto vec_2_2 = pos_neighbor - j_pos;
 
                 auto cos_theta_1 = vec_1_1.dot(vec_1_2) / (vec_1_1.norm() * vec_1_2.norm());
                 auto cos_theta_2 = vec_2_1.dot(vec_2_2) / (vec_2_1.norm() * vec_2_2.norm());
@@ -200,9 +199,9 @@ static void node_min_surf_cot_exec(ExeParams params)
         }
     }
     A.makeCompressed();
+
     solve_transform(A, vertex_num, halfedge_mesh);
 
-    /* ----------------------------- Postprocess ------------------------------ */
     auto operand_base = openmesh_to_operand(halfedge_mesh.get());
     params.set_output("Output", std::move(*operand_base));
 }
