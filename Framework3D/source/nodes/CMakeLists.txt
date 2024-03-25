@@ -49,7 +49,7 @@ add_node_discovery(
   register_nodes 
 )
 
-add_library(nodes STATIC "${CPP_FILES}" "nodes/geometry/utils/util_getboundary_edges.h" "nodes/geometry/utils/util_solve.h")
+add_library(nodes STATIC "${CPP_FILES}" "nodes/geometry/utils/util_getboundary_edges.h" "nodes/geometry/utils/util_solve.h" "nodes/geometry/utils/util_solve.cpp" "nodes/geometry/utils/util_getboundary_edges.cpp")
 
 target_link_libraries(nodes_generated nodes)
 target_link_libraries(nodes nodes_generated)
