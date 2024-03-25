@@ -3,6 +3,7 @@
 #include "util_openmesh_bind.h"
 
 USTC_CG_NAMESPACE_OPEN_SCOPE
+
 void solve_transform(
     const Eigen::SparseMatrix<double>& A,
     int vertex_num,
@@ -12,9 +13,8 @@ void solve_transform(
         Eigen::SparseVector<double> b(vertex_num);
 
         for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-            int idx = vertex_handle.idx();
             if (vertex_handle.is_boundary()) {
-                b.coeffRef(idx) = halfedge_mesh->point(vertex_handle)[dim];
+                b.coeffRef(vertex_handle.idx()) = halfedge_mesh->point(vertex_handle)[dim];
             }
         }
 
@@ -23,12 +23,12 @@ void solve_transform(
         if (solver.info() != Eigen::Success) {
             throw std::runtime_error("Minimal Surface: Matrix A factorize failed.");
         }
+
         Eigen::VectorXd x = solver.solve(b);
         for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-            int idx = vertex_handle.idx();
             if (!vertex_handle.is_boundary()) {
                 auto point = halfedge_mesh->point(vertex_handle);
-                point[dim] = x(idx);
+                point[dim] = x(vertex_handle.idx());
                 halfedge_mesh->set_point(vertex_handle, point);
             }
         }
