@@ -7,6 +7,7 @@
 #include "Nodes/node_register.h"
 #include "geom_node_base.h"
 #include "utils/util_openmesh_bind.h"
+#include  "utils/util_getboundary_edges.h"
 
 /*
 ** @brief HW4_TutteParameterization
@@ -83,26 +84,7 @@ static void node_map_boundary_to_circle_exec(ExeParams params)
     ** Note: It would be better to normalize the boundary to a unit circle in [0,1]x[0,1] for
     ** texture mapping.
     */
-    std::vector<int> boundary_halfedges;
-    for (const auto& halfedge_handle : halfedge_mesh->halfedges()) {
-        if (halfedge_handle.is_boundary()) {
-            boundary_halfedges.push_back(halfedge_handle.idx());
-            break;
-        }
-    }
-    if (boundary_halfedges.empty()) {
-        throw std::runtime_error("No boundary edges.");
-    }
-
-    int index = boundary_halfedges[0];
-    do {
-        auto this_handle = halfedge_mesh->halfedge_handle(index);
-        int next_index = halfedge_mesh->next_halfedge_handle(this_handle).idx();
-        boundary_halfedges.push_back(next_index);
-        index = next_index;
-    } while (index != boundary_halfedges[0]);
-
-    boundary_halfedges.pop_back();
+    std::vector<int> boundary_halfedges = get_boundary_edges(halfedge_mesh);
 
     for (int i = 0; i < boundary_halfedges.size(); ++i) {
         auto bhe_idx = boundary_halfedges[i];
@@ -172,27 +154,7 @@ static void node_map_boundary_to_square_exec(ExeParams params)
     ** texture mapping.
     */
 
-    std::vector<int> boundary_halfedges;
-    for (const auto& halfedge_handle : halfedge_mesh->halfedges()) {
-        if (halfedge_handle.is_boundary()) {
-            boundary_halfedges.push_back(halfedge_handle.idx());
-            break;
-        }
-    }
-    if (boundary_halfedges.empty()) {
-        throw std::runtime_error("No boundary edges.");
-    }
-
-    int index = boundary_halfedges[0];
-    do {
-        auto this_handle = halfedge_mesh->halfedge_handle(index);
-        int next_index = halfedge_mesh->next_halfedge_handle(this_handle).idx();
-        boundary_halfedges.push_back(next_index);
-        index = next_index;
-    } while (index != boundary_halfedges[0]);
-
-    boundary_halfedges.pop_back();
-
+    std::vector<int> boundary_halfedges = get_boundary_edges(halfedge_mesh);
 
     for (int k = 0; k < 4; k++) {
         double m = boundary_halfedges.size() / 4;

@@ -1,5 +1,3 @@
-#include <Eigen/Sparse>
-#include <Eigen/SparseLU>
 #include <iostream>
 
 #include "GCore/Components/MeshOperand.h"
@@ -8,6 +6,7 @@
 #include "Nodes/node_register.h"
 #include "geom_node_base.h"
 #include "utils/util_openmesh_bind.h"
+#include "utils/util_solve.h"
 
 /*
 ** @brief HW4_TutteParameterization
@@ -126,31 +125,7 @@ static void node_min_surf_exec(ExeParams params)
     }
     A.makeCompressed();
 
-    for (int dim = 0; dim < 3; ++dim) {
-        Eigen::SparseVector<double> b(vertex_num);
-
-        for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-            int idx = vertex_handle.idx();
-            if (vertex_handle.is_boundary()) {
-                b.coeffRef(idx) = halfedge_mesh->point(vertex_handle)[dim];
-            }
-        }
-
-        Eigen::SparseLU<Eigen::SparseMatrix<double>> solver(A);
-        solver.factorize(A);
-        if (solver.info() != Eigen::Success) {
-            throw std::runtime_error("Minimal Surface: Matrix A factorize failed.");
-        }
-        Eigen::VectorXd x = solver.solve(b);
-        for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-            int idx = vertex_handle.idx();
-            if (!vertex_handle.is_boundary()) {
-                auto point = halfedge_mesh->point(vertex_handle);
-                point[dim] = x(idx);
-                halfedge_mesh->set_point(vertex_handle, point);
-            }
-        }
-    }
+    solve_transform(A, vertex_num, halfedge_mesh);
 
     /* ----------------------------- Postprocess ------------------------------
     ** Convert the minimal surface mesh from the halfedge structure back to
@@ -160,15 +135,6 @@ static void node_min_surf_exec(ExeParams params)
 
     // Set the output of the nodes
     params.set_output("Output", std::move(*operand_base));
-
-    //for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-    //    pxr::GfVec3f val;
-    //    auto point = halfedge_mesh->point(vertex_handle);
-    //    for (int i = 0; i < point.size() && i < 3; ++i)
-    //        val[i] = point[i];
-    //    buffer.push_back(val);
-    //}
-    //params.set_output("Buffer", buffer);
 }
 
 static void node_min_surf_cot_declare(NodeDeclarationBuilder& b)
@@ -234,31 +200,7 @@ static void node_min_surf_cot_exec(ExeParams params)
         }
     }
     A.makeCompressed();
-    for (int dim = 0; dim < 3; ++dim) {
-        Eigen::SparseVector<double> b(vertex_num);
-        for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-            int idx = vertex_handle.idx();
-            if (vertex_handle.is_boundary()) {
-                b.coeffRef(idx) = halfedge_mesh->point(vertex_handle)[dim];
-            }
-        }
-        Eigen::SparseLU<Eigen::SparseMatrix<double>> solver(A);
-        solver.factorize(A);
-        if (solver.info() != Eigen::Success) {
-            std::cout << "fail to factorize A" << std::endl;
-        }
-        else {
-            Eigen::VectorXd x = solver.solve(b);
-            for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-                int index_self = vertex_handle.idx();
-                if (!vertex_handle.is_boundary()) {
-                    auto point = halfedge_mesh->point(vertex_handle);
-                    point[dim] = x(index_self);
-                    halfedge_mesh->set_point(vertex_handle, point);
-                }
-            }
-        }
-    }
+    solve_transform(A, vertex_num, halfedge_mesh);
 
     /* ----------------------------- Postprocess ------------------------------ */
     auto operand_base = openmesh_to_operand(halfedge_mesh.get());
