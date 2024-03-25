@@ -1,12 +1,13 @@
+#include <cmath>
+#include <iostream>
+
 #include "GCore/Components/MeshOperand.h"
 #include "Nodes/node.hpp"
 #include "Nodes/node_declare.hpp"
 #include "Nodes/node_register.h"
 #include "geom_node_base.h"
 #include "utils/util_openmesh_bind.h"
-
-#include <iostream>
-#include <cmath>
+#include  "utils/util_getboundary_edges.h"
 
 /*
 ** @brief HW4_TutteParameterization
@@ -51,7 +52,7 @@ static void node_map_boundary_to_circle_exec(ExeParams params)
     if (!input.get_component<MeshComponent>()) {
         throw std::runtime_error("Boundary Mapping: Need Geometry Input.");
     }
-//    throw std::runtime_error("Not implemented");
+    //    throw std::runtime_error("Not implemented");
 
     /* ----------------------------- Preprocess -------------------------------
     ** Create a halfedge structure (using OpenMesh) for the input mesh. The
@@ -83,44 +84,15 @@ static void node_map_boundary_to_circle_exec(ExeParams params)
     ** Note: It would be better to normalize the boundary to a unit circle in [0,1]x[0,1] for
     ** texture mapping.
     */
-    /* 找到边界 */
-    std::vector<int> boundary_halfedge_index_vector;
-    /* 找到一个边界边 */
-    for (const auto& halfedge_handle : halfedge_mesh->halfedges()) {
-        if (halfedge_handle.is_boundary())
-        {
-            boundary_halfedge_index_vector.push_back(halfedge_handle.idx());
-            break;
-        }
-    }
-    if (boundary_halfedge_index_vector.empty()) {
-        throw std::runtime_error("No boundary edges found.");
-    }
-    /* 从这个边开始遍历 */
-    int index = boundary_halfedge_index_vector[0];
-    int timeout = halfedge_mesh->n_halfedges();
-    do {
-        auto this_handle = halfedge_mesh->halfedge_handle(index);
-        auto next_handle = halfedge_mesh->next_halfedge_handle(this_handle);
-        int next_index = next_handle.idx();
-        boundary_halfedge_index_vector.push_back(next_index);
-        index = next_index;
-    } while (index != boundary_halfedge_index_vector[0] && timeout --);
+    std::vector<int> boundary_halfedges = get_boundary_edges(halfedge_mesh);
 
-    if (timeout <= 0) {
-        throw std::runtime_error("Fail to find a closed boundary.");
-    }
-    boundary_halfedge_index_vector.pop_back();
-    std::cout << "Closed boundary found, num_halfedges = " << boundary_halfedge_index_vector.size() << std::endl;
-
-    /* 映射到半径为1的圆上 */
-    for (int i = 0; i < boundary_halfedge_index_vector.size(); ++ i) {
-        auto boundary_halfedge_index = boundary_halfedge_index_vector[i];
-        auto boundary_halfedge_handle = halfedge_mesh->halfedge_handle(boundary_halfedge_index);
-        auto vertex_handle = halfedge_mesh->to_vertex_handle(boundary_halfedge_handle);
+    for (int i = 0; i < boundary_halfedges.size(); ++i) {
+        auto bhe_idx = boundary_halfedges[i];
+        auto halfedge_handle = halfedge_mesh->halfedge_handle(bhe_idx);
+        auto vertex_handle = halfedge_mesh->to_vertex_handle(halfedge_handle);
         auto location = halfedge_mesh->point(vertex_handle);
-        location[0] = std::cos(2.0 * M_PI * i / boundary_halfedge_index_vector.size());
-        location[1] = std::sin(2.0 * M_PI * i / boundary_halfedge_index_vector.size());
+        location[0] = std::cos(2.0 * M_PI * i / boundary_halfedges.size()) / 2 + 0.5;
+        location[1] = std::sin(2.0 * M_PI * i / boundary_halfedges.size()) / 2 + 0.5;
         location[2] = 0.0;
 
         halfedge_mesh->set_point(vertex_handle, location);
@@ -162,7 +134,6 @@ static void node_map_boundary_to_square_exec(ExeParams params)
     if (!input.get_component<MeshComponent>()) {
         throw std::runtime_error("Input does not contain a mesh");
     }
-    throw std::runtime_error("Not implemented");
 
     /* ----------------------------- Preprocess -------------------------------
     ** Create a halfedge structure (using OpenMesh) for the input mesh.
@@ -183,14 +154,54 @@ static void node_map_boundary_to_square_exec(ExeParams params)
     ** texture mapping.
     */
 
+    std::vector<int> boundary_halfedges = get_boundary_edges(halfedge_mesh);
+
+    for (int k = 0; k < 4; k++) {
+        double m = boundary_halfedges.size() / 4;
+        for (int i = k * m; i < (k + 1) * m; ++i) {
+            auto bhe_idx = boundary_halfedges[i];
+            auto halfedge_handle = halfedge_mesh->halfedge_handle(bhe_idx);
+            auto vertex_handle = halfedge_mesh->to_vertex_handle(halfedge_handle);
+            auto location = halfedge_mesh->point(vertex_handle);
+            switch (k) {
+                case 0: {
+                    location[0] = (i - k * m) / m;
+                    location[1] = 0;
+                    break;
+                }
+                case 1: {
+                    location[0] = 1;
+                    location[1] = (i - k * m) / m;
+                    break;
+                }
+                case 2: {
+                    location[0] = 1 - ((i - k * m) / m);
+                    location[1] = 1;
+                    break;
+                }
+                case 3: {
+                    location[0] = 0;
+                    location[1] = 1 - ((i - k * m) / m);
+                    break;
+                }
+            }
+            location[2] = 0;
+            halfedge_mesh->set_point(vertex_handle, location);
+        }
+    }
+
     /* ----------------------------- Postprocess ------------------------------
     ** Convert the result mesh from the halfedge structure back to GOperandBase format as the node's
     ** output.
     */
     auto operand_base = openmesh_to_operand(halfedge_mesh.get());
 
+    auto& output = input;
+    output.get_component<MeshComponent>()->vertices =
+        operand_base->get_component<MeshComponent>()->vertices;
+
     // Set the output of the nodes
-    params.set_output("Output", std::move(*operand_base));
+    params.set_output("Output", std::move(output));
 }
 
 static void node_register()

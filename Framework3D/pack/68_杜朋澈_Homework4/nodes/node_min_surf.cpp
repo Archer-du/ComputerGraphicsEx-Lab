@@ -1,13 +1,12 @@
+#include <iostream>
+
 #include "GCore/Components/MeshOperand.h"
 #include "Nodes/node.hpp"
 #include "Nodes/node_declare.hpp"
 #include "Nodes/node_register.h"
 #include "geom_node_base.h"
 #include "utils/util_openmesh_bind.h"
-
-#include <iostream>
-#include <Eigen/Sparse>
-#include <Eigen/SparseLU>
+#include "utils/util_solve.h"
 
 /*
 ** @brief HW4_TutteParameterization
@@ -48,7 +47,6 @@ static void node_min_surf_declare(NodeDeclarationBuilder& b)
 
     // Output-1: Minimal surface with fixed boundary
     b.add_output<decl::Geometry>("Output");
-    b.add_output<decl::Float4Buffer>("Buffer");
 }
 
 static void node_min_surf_exec(ExeParams params)
@@ -60,7 +58,6 @@ static void node_min_surf_exec(ExeParams params)
     if (!input.get_component<MeshComponent>()) {
         throw std::runtime_error("Minimal Surface: Need Geometry Input.");
     }
-//    throw std::runtime_error("Not implemented");
 
     /* ----------------------------- Preprocess -------------------------------
     ** Create a halfedge structure (using OpenMesh) for the input mesh. The
@@ -109,63 +106,26 @@ static void node_min_surf_exec(ExeParams params)
     **
     */
 
-    /* 一些初始化 */
-    pxr::VtArray<pxr::GfVec3f> buffer; // Output
-
-    int num_vertex = halfedge_mesh->n_vertices(), num_vertex_border = 0, num_vertex_inner = 0;
-    /* 获取矩阵 A 的大小 */
-    for (const auto& vertex_handle: halfedge_mesh->vertices())
-        if (!vertex_handle.is_boundary())
-            ++ num_vertex_inner;
-    num_vertex_border = num_vertex - num_vertex_inner;
-    std::cout << "num of vertices: " << num_vertex << std::endl;
-    std::cout << "num of border: " << num_vertex_border << std::endl;
-    std::cout << "num of inner: " << num_vertex_inner << std::endl;
-
-    /* 三个维度分别处理 */
-    for (int dimension = 0; dimension < 3; ++ dimension) {
-        /* 获取矩阵 A，向量 b */
-        Eigen::SparseMatrix<double> A(num_vertex, num_vertex);
-        Eigen::SparseVector<double> b(num_vertex);
-        for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-            int index_self = vertex_handle.idx();
-            if (!vertex_handle.is_boundary()) {
-                /* 非边界点，列入方程 */
-                int num_neighbor = 0;
-                for (const auto& out_halfedge : vertex_handle.outgoing_halfedges()) {
-                    ++ num_neighbor;
-                    auto neigh_v_handle = out_halfedge.to();
-                    int index_neighbor = neigh_v_handle.idx();
-                    A.coeffRef(index_self, index_neighbor) = -1;
-                }
-                A.coeffRef(index_self, index_self) = num_neighbor;
-            }
-            else {
-                A.coeffRef(index_self, index_self) = 1;
-                b.coeffRef(index_self) = halfedge_mesh->point(vertex_handle)[dimension];
-            }
-        }
-        A.makeCompressed();
-
-        /* 求解！ */
-        Eigen::SparseLU<Eigen::SparseMatrix<double>> solver(A);
-        solver.factorize(A);
-        if(solver.info() != Eigen::Success) {
-            std::cout << "fail to factorize A" << std::endl;
+    int vertex_num = halfedge_mesh->n_vertices();
+    Eigen::SparseMatrix<double> A(vertex_num, vertex_num);
+    for (const auto& vertex_handle : halfedge_mesh->vertices()) {
+        int idx = vertex_handle.idx();
+        if (vertex_handle.is_boundary()) {
+            A.coeffRef(idx, idx) = 1;
         }
         else {
-            Eigen::VectorXd x = solver.solve(b);
-            for (const auto& vertex_handle : halfedge_mesh->vertices()) {
-                int index_self = vertex_handle.idx();
-                if (!vertex_handle.is_boundary()) {
-                    /* 内点，跟新参数 */
-                    auto point = halfedge_mesh->point(vertex_handle);
-                    point[dimension] = x(index_self);
-                    halfedge_mesh->set_point(vertex_handle, point);
-                }
+            int neighbor_num = 0;
+            for (const auto& out_halfedge : vertex_handle.outgoing_halfedges()) {
+                ++neighbor_num;
+                int neighbor_idx = out_halfedge.to().idx();
+                A.coeffRef(idx, neighbor_idx) = -1;
             }
+            A.coeffRef(idx, idx) = neighbor_num;
         }
     }
+    A.makeCompressed();
+
+    solve_transform(A, vertex_num, halfedge_mesh);
 
     /* ----------------------------- Postprocess ------------------------------
     ** Convert the minimal surface mesh from the halfedge structure back to
@@ -175,28 +135,96 @@ static void node_min_surf_exec(ExeParams params)
 
     // Set the output of the nodes
     params.set_output("Output", std::move(*operand_base));
+}
 
-    for (const auto &vertex_handle : halfedge_mesh->vertices()) {
-        pxr::GfVec3f val;
-        auto point = halfedge_mesh->point(vertex_handle);
-        for (int i = 0; i < point.size() && i < 3; ++ i)
-            val[i] = point[i];
-        buffer.push_back(val);
+static void node_min_surf_cot_declare(NodeDeclarationBuilder& b)
+{
+    // Input-1: Original 3D mesh with boundary
+    b.add_input<decl::Geometry>("Origin");
+    b.add_input<decl::Geometry>("Input");
+    // Output-1: Minimal surface with fixed boundary
+    b.add_output<decl::Geometry>("Output");
+}
+
+static void node_min_surf_cot_exec(ExeParams params)
+{
+    // Get the input from params
+    auto input = params.get_input<GOperandBase>("Input");
+    auto input_o = params.get_input<GOperandBase>("Origin");
+
+    // (TO BE UPDATED) Avoid processing the node when there is no input
+    if (!input.get_component<MeshComponent>() || !input_o.get_component<MeshComponent>()) {
+        throw std::runtime_error("Minimal Surface: Need Geometry Input.");
     }
-    params.set_output("Buffer", buffer);
+    auto halfedge_mesh = operand_to_openmesh(&input);
+    auto origin_mesh = operand_to_openmesh(&input_o);
+
+    int vertex_num = halfedge_mesh->n_vertices();
+    Eigen::SparseMatrix<double> A(vertex_num, vertex_num);
+    for (const auto& vertex_handle : halfedge_mesh->vertices()) {
+        int idx = vertex_handle.idx();
+        if (vertex_handle.is_boundary()) {
+            A.coeffRef(idx, idx) = 1;
+        }
+        else {
+            double sum_weight = 0.0;
+            for (const auto& out_halfedge : vertex_handle.outgoing_halfedges()) {
+                double weight = 0.0;
+                int neighbor_idx = out_halfedge.to().idx();
+                auto vi_idx = out_halfedge.prev().from().idx();
+                auto vj_idx = out_halfedge.opp().next().to().idx();
+
+                auto pos_self = origin_mesh->point(origin_mesh->vertex_handle(idx));
+                auto pos_neighbor = origin_mesh->point(origin_mesh->vertex_handle(neighbor_idx));
+                auto i_pos = origin_mesh->point(origin_mesh->vertex_handle(vi_idx));
+                auto j_pos = origin_mesh->point(origin_mesh->vertex_handle(vj_idx));
+
+                auto vec_1_1 = pos_self - i_pos;
+                auto vec_1_2 = pos_neighbor - i_pos;
+                auto vec_2_1 = pos_self - j_pos;
+                auto vec_2_2 = pos_neighbor - j_pos;
+
+                auto cos_theta_1 = vec_1_1.dot(vec_1_2) / (vec_1_1.norm() * vec_1_2.norm());
+                auto cos_theta_2 = vec_2_1.dot(vec_2_2) / (vec_2_1.norm() * vec_2_2.norm());
+
+                auto cot_theta_1 = cos_theta_1 / (std::sqrt(1 - cos_theta_1 * cos_theta_1));
+                auto cot_theta_2 = cos_theta_2 / (std::sqrt(1 - cos_theta_2 * cos_theta_2));
+
+                weight = cot_theta_1 + cot_theta_2;
+
+                A.coeffRef(idx, neighbor_idx) = -weight;
+                sum_weight += weight;
+            }
+            A.coeffRef(idx, idx) = sum_weight;
+        }
+    }
+    A.makeCompressed();
+
+    solve_transform(A, vertex_num, halfedge_mesh);
+
+    auto operand_base = openmesh_to_operand(halfedge_mesh.get());
+    params.set_output("Output", std::move(*operand_base));
 }
 
 static void node_register()
 {
-    static NodeTypeInfo ntype;
+    static NodeTypeInfo ntype, ntype_cot;
 
-    strcpy(ntype.ui_name, "Minimal Surface");
+    strcpy(ntype.ui_name, "Minimal Surface Uniform");
     strcpy_s(ntype.id_name, "geom_min_surf");
 
     geo_node_type_base(&ntype);
     ntype.node_execute = node_min_surf_exec;
     ntype.declare = node_min_surf_declare;
     nodeRegisterType(&ntype);
+
+    strcpy(ntype_cot.ui_name, "Minimal Surface Cotangent");
+    strcpy_s(ntype_cot.id_name, "geom_min_surf_cot");
+
+    geo_node_type_base(&ntype_cot);
+    ntype_cot.node_execute = node_min_surf_cot_exec;
+    ntype_cot.declare = node_min_surf_cot_declare;
+    nodeRegisterType(&ntype_cot);
 }
 
 NOD_REGISTER_NODE(node_register)
