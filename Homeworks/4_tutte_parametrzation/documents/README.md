@@ -45,6 +45,7 @@ $$ \boldsymbol\delta _ i = \boldsymbol{v _ i} - \sum _ {j \in N(i)} w _ j  \bold
 - Floater's shape-preserving weights (optional): 参考 [Floater1997](https://www.cs.jhu.edu/~misha/Fall09/Floater97.pdf)； 
 - 归一化处理 :
   
+
 $$ w _ j = \frac{w _ j}{\displaystyle \sum_k w_k }.$$
 
 
