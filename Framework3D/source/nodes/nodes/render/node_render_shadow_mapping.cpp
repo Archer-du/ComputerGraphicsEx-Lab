@@ -20,7 +20,7 @@ static void node_declare(NodeDeclarationBuilder& b)
     b.add_input<decl::Meshes>("Meshes");
     b.add_input<decl::Lights>("Lights");
     b.add_input<decl::Int>("resolution").default_val(1024).min(256).max(4096);
-    b.add_input<decl::String>("Shader").default_val("shaders/shadow_mapping.fs");
+    b.add_input<decl::String>("Shader").default_val("shaders/shadow_mapping.frag");
 
     b.add_output<decl::Texture>("Shadow Maps");
 }
@@ -43,7 +43,7 @@ static void node_exec(ExeParams params)
     ShaderDesc shader_desc;
     shader_desc.set_vertex_path(
         std::filesystem::path(RENDER_NODES_FILES_DIR) /
-        std::filesystem::path("shaders/shadow_mapping.vs"));
+        std::filesystem::path("shaders/shadow_mapping.vert"));
 
     shader_desc.set_fragment_path(
         std::filesystem::path(RENDER_NODES_FILES_DIR) / std::filesystem::path(shaderPath));

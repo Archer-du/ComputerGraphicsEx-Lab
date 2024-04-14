@@ -21,8 +21,8 @@ static void node_declare(NodeDeclarationBuilder& b)
     b.add_input<decl::Camera>("Camera");
     b.add_input<decl::Meshes>("Meshes");
     b.add_input<decl::Materials>("Materials");
-    b.add_input<decl::String>("Vertex Shader").default_val("shaders/rasterize_impl.vs");
-    b.add_input<decl::String>("Fragment Shader").default_val("shaders/rasterize_impl.fs");
+    b.add_input<decl::String>("Vertex Shader").default_val("shaders/rasterize_impl.vert");
+    b.add_input<decl::String>("Fragment Shader").default_val("shaders/rasterize_impl.frag");
     b.add_output<decl::Texture>("Position");
     b.add_output<decl::Texture>("Depth");
     b.add_output<decl::Texture>("Texcoords");

@@ -27,7 +27,7 @@ static void node_declare(NodeDeclarationBuilder& b)
     b.add_input<decl::Texture>("Normal");
     b.add_input<decl::Texture>("Shadow Maps");
 
-    b.add_input<decl::String>("Lighting Shader").default_val("shaders/blinn_phong.fs");
+    b.add_input<decl::String>("Lighting Shader").default_val("shaders/blinn_phong.frag");
     b.add_output<decl::Texture>("Color");
 }
 
@@ -80,7 +80,7 @@ static void node_exec(ExeParams params)
     ShaderDesc shader_desc;
     shader_desc.set_vertex_path(
         std::filesystem::path(RENDER_NODES_FILES_DIR) /
-        std::filesystem::path("shaders/fullscreen.vs"));
+        std::filesystem::path("shaders/fullscreen.vert"));
 
     shader_desc.set_fragment_path(
         std::filesystem::path(RENDER_NODES_FILES_DIR) / std::filesystem::path(shaderPath));
