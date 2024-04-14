@@ -43,29 +43,29 @@ void main() {
     float metal = metalnessRoughness.x;
     float roughness = metalnessRoughness.y;
 
+    //blinn-phong
+    float k_ambi = 0.1;
+    float k_spec = metal * 0.8;
+    float k_diff = 1 - k_spec;
+
+    float shinness = (1 - roughness) * 16;
+
     for(int i = 0; i < light_count; i ++) {
-        float shadow_map_value = texture(shadow_maps, vec3(uv, lights[i].shadow_map_id)).x;
-
-        // Visualization of shadow map
-        Color += vec4(shadow_map_value, 0, 0, 1);
-
-
-
-        //blinn-phong
-        vec3 ambient = 0.1 * lights[i].color * texture(diffuseColorSampler, uv).xyz;
+        vec3 ambient = k_ambi * lights[i].color * texture(diffuseColorSampler, uv).xyz;
 
         vec3 lightDir = normalize(lights[i].position - pos);
-        float k_diff = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = lights[i].color * k_diff * texture(diffuseColorSampler, uv).xyz;
+        vec3 diffuse = lights[i].color * k_diff * max(dot(normal, lightDir), 0.0) * texture(diffuseColorSampler, uv).xyz;
 
         vec3 viewDir = normalize(camPos - pos);
         vec3 halfwayDir = normalize(lightDir + viewDir);
-        float k_spec = pow(max(dot(normal, halfwayDir), 0.0), 16);
-        vec3 specular = lights[i].color * k_spec * texture(diffuseColorSampler, uv).xyz;
+        vec3 specular = lights[i].color * k_spec * pow(max(dot(normal, halfwayDir), 0.0), shinness) * texture(diffuseColorSampler, uv).xyz;
 
         vec3 result = ambient + diffuse + specular;
         Color += vec4(result, 1.0);
 
+        float shadow_map_value = texture(shadow_maps, vec3(uv, lights[i].shadow_map_id)).x;
+        // Visualization of shadow map
+        Color += vec4(shadow_map_value, 0, 0, 1);
         // HW6_TODO: first comment the line above ("Color +=..."). That's for quick Visualization.
         // You should first do the Blinn Phong shading here. You can use roughness to modify alpha. Or you can pass in an alpha value through the uniform above.
 
