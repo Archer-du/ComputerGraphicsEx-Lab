@@ -32,6 +32,7 @@ uniform int light_count;
 
 layout(location = 0) out vec4 Color;
 
+
 void main() {
     vec2 uv = gl_FragCoord.xy / iResolution;
 
@@ -44,7 +45,7 @@ void main() {
     float roughness = metalnessRoughness.y;
 
     //blinn-phong
-    float k_ambi = 0.1;
+    float k_ambi = 0.4;
     float k_spec = metal * 0.8;
     float k_diff = 1 - k_spec;
 
@@ -60,12 +61,34 @@ void main() {
         vec3 halfwayDir = normalize(lightDir + viewDir);
         vec3 specular = lights[i].color * k_spec * pow(max(dot(normal, halfwayDir), 0.0), shinness) * texture(diffuseColorSampler, uv).xyz;
 
-        vec3 result = ambient + diffuse + specular;
+        vec4 lightPos = lights[i].light_projection * lights[i].light_view * vec4(pos, 1.0);
+        vec3 projCoords = lightPos.xyz / lightPos.w;
+
+        float bias = max(0.2 * (1.0 - dot(normal, lightDir)), 0.005);
+        float currentDepth = projCoords.z;
+        projCoords = projCoords * 0.5 + 0.5;
+        vec2 texelSize = (1.0 / textureSize(shadow_maps, 0)).xy;
+        float shadow = 0.0;
+        for(int x = -1; x <= 1; ++x)
+        {
+            for(int y = -1; y <= 1; ++y)
+            {
+                float closestDepth = texture(shadow_maps, vec3(projCoords.xy + vec2(x, y) * texelSize, lights[i].shadow_map_id)).x;
+                shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
+            }    
+        }
+        shadow /= 9.0;
+        if(projCoords.z > 1.0)
+            shadow = 0.0;
+
+        vec3 result = ambient + (1.0 - shadow * 0.8) * (diffuse + specular);
         Color += vec4(result, 1.0);
 
-        float shadow_map_value = texture(shadow_maps, vec3(uv, lights[i].shadow_map_id)).x;
+
+
         // Visualization of shadow map
-        Color += vec4(shadow_map_value, 0, 0, 1);
+        // Color += vec4(currentDepth, 0, 0, 1);
+        // Color += vec4(closestDepth, 0, 0, 1);
         // HW6_TODO: first comment the line above ("Color +=..."). That's for quick Visualization.
         // You should first do the Blinn Phong shading here. You can use roughness to modify alpha. Or you can pass in an alpha value through the uniform above.
 

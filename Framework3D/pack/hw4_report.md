@@ -1,4 +1,4 @@
-# HW4: report
+# HW6: report
 
 ---
 
@@ -14,31 +14,42 @@
 
 ## 算法
 
-### 极小曲面计算
 
-#### uniform weight
-
-固定边界点坐标，取均匀权重下的 $\boldsymbol{\delta} _ i = \boldsymbol{0}$ 即
-
-$$ \frac{1}{d _ i} \sum _ {j\in N(i)} (\boldsymbol{v} _ i - \boldsymbol{v} _ j) = \boldsymbol{0}, \quad \text{for all interior } i .$$
-
-
-
-#### cotangent weight
-
-$w _ j = \cot \alpha _ {ij} + \cot \beta _ {ij}$
-
-
-
-### Tutte 参数化计算
-
-分布边界点的坐标到平面凸区域的边界，求解同样的方程组：
-
-$$ \boldsymbol{v _ i} - \sum _ {j \in N(i)} w _ j  \boldsymbol{v _ j} = \boldsymbol{0}, \quad \text{for all interior } i .$$​
 
 
 
 ## 实现
+
+### Blinn-Phong光照模型
+
+fragment shader代码：
+
+```glsl
+//blinn-phong
+float k_ambi = 0.4;
+float k_spec = metal * 0.8;
+float k_diff = 1 - k_spec;
+
+float shinness = (1 - roughness) * 16;
+
+for(int i = 0; i < light_count; i ++) {
+    vec3 ambient = lights[i].color * k_ambi * texture(diffuseColorSampler, uv).xyz;
+
+    vec3 lightDir = normalize(lights[i].position - pos);
+    vec3 diffuse = lights[i].color * k_diff * max(dot(normal, lightDir), 0.0) * texture(diffuseColorSampler, uv).xyz;
+
+    vec3 viewDir = normalize(camPos - pos);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    vec3 specular = lights[i].color * k_spec * pow(max(dot(normal, halfwayDir), 0.0), shinness) * texture(diffuseColorSampler, uv).xyz;
+
+    vec3 result = ambient + diffuse + specular;
+    Color += vec4(result, 1.0);
+}
+```
+
+
+
+
 
 ### algorithm lib
 
@@ -267,34 +278,11 @@ $$ \boldsymbol{v _ i} - \sum _ {j \in N(i)} w _ j  \boldsymbol{v _ j} = \boldsym
 
 ## 演示
 
+![image-20240414211515425](C:\Users\Archer\AppData\Roaming\Typora\typora-user-images\image-20240414211515425.png)
+
 ### 最小曲面
 
 - uniform weight (Balls)
 
-  ![image-20240325192459236](C:\Users\Archer\AppData\Roaming\Typora\typora-user-images\image-20240325192459236.png)
+  
 
-- cotangent weight (Balls)
-
-  ![image-20240325192522773](C:\Users\Archer\AppData\Roaming\Typora\typora-user-images\image-20240325192522773.png)
-
-
-
-### 边界映射
-
-- circle (Balls, cotangent weight)
-
-  ![image-20240325192828927](C:\Users\Archer\AppData\Roaming\Typora\typora-user-images\image-20240325192828927.png)
-
-- square (Balls, cotangent weight)
-
-  ![image-20240325192801622](C:\Users\Archer\AppData\Roaming\Typora\typora-user-images\image-20240325192801622.png)
-
-### 参数化
-
-- Balls (square map, cotangent weight)
-
-  ![image-20240325192933133](C:\Users\Archer\AppData\Roaming\Typora\typora-user-images\image-20240325192933133.png)
-
-- CatHead (square map, cotangent weight)
-
-  ![image-20240325193147641](C:\Users\Archer\AppData\Roaming\Typora\typora-user-images\image-20240325193147641.png)
