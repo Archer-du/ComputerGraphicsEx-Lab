@@ -32,6 +32,22 @@ uniform int light_count;
 
 layout(location = 0) out vec4 Color;
 
+float BlockerSearch(int light_id, vec2 uv, float receiverDepth) {
+    vec2 searchWidth = (5 * lights[light_id].radius / textureSize(shadow_maps, 0)).xy;
+    float avgBlockerDepth = 0.0;
+    int blockers = 0;
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            float sampleDepth = texture(shadow_maps, vec3(uv + vec2(x, y) * searchWidth, lights[light_id].shadow_map_id)).x;
+            if (sampleDepth < receiverDepth) {
+                avgBlockerDepth += sampleDepth;
+                blockers++;
+            }
+        }
+    }
+    if (blockers == 0) return 0.0;
+    return avgBlockerDepth / float(blockers);
+}
 
 void main() {
     vec2 uv = gl_FragCoord.xy / iResolution;
@@ -65,19 +81,23 @@ void main() {
         vec3 projCoords = lightPos.xyz / lightPos.w;
 
         float bias = max(0.2 * (1.0 - dot(normal, lightDir)), 0.005);
+        float shadow = 0.0;
         float currentDepth = projCoords.z;
         projCoords = projCoords * 0.5 + 0.5;
-        vec2 texelSize = (1.0 / textureSize(shadow_maps, 0)).xy;
-        float shadow = 0.0;
-        for(int x = -1; x <= 1; ++x)
-        {
-            for(int y = -1; y <= 1; ++y)
-            {
-                float closestDepth = texture(shadow_maps, vec3(projCoords.xy + vec2(x, y) * texelSize, lights[i].shadow_map_id)).x;
-                shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
-            }    
+        float blockerDepth = BlockerSearch(i, projCoords.xy, currentDepth);
+        if (blockerDepth > 0.0) {
+            float penumbraSize = (currentDepth - blockerDepth) * (5 * lights[i].radius * 5 * lights[i].radius) / blockerDepth;
+            vec2 texelSize = (penumbraSize / textureSize(shadow_maps, 0)).xy;
+            // 使用更大的采样区域进行PCF
+            for (int x = -1; x <= 1; ++x) {
+                for (int y = -1; y <= 1; ++y) {
+                    float closestDepth = texture(shadow_maps, vec3(projCoords.xy + vec2(x, y) * texelSize, lights[i].shadow_map_id)).x;
+                    shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
+                }
+            }
+            shadow /= 9.0;
         }
-        shadow /= 9.0;
+
         if(projCoords.z > 1.0)
             shadow = 0.0;
 

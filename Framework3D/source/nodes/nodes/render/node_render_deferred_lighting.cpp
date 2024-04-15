@@ -154,7 +154,7 @@ static void node_exec(ExeParams params)
                 frustum.SetPerspective(120.f, 1.0, 1, 25.f);
                 light_projection_mat = GfMatrix4f(frustum.ComputeProjectionMatrix());
             }
-            light_vector.emplace_back(light_projection_mat, light_view_mat, position3, 0.f, diffuse3, i);
+            light_vector.emplace_back(light_projection_mat, light_view_mat, position3, radius, diffuse3, i);
         }
     }
 
