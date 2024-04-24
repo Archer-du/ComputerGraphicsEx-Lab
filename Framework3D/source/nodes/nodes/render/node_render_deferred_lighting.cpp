@@ -139,7 +139,7 @@ static void node_exec(ExeParams params)
             pxr::GfVec3f position3(position4[0], position4[1], position4[2]);
 
             auto radius = lights[i]->Get(HdLightTokens->radius).Get<float>();
-
+            
             GfMatrix4f light_view_mat;
             GfMatrix4f light_projection_mat;
 
