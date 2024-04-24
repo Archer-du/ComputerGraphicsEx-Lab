@@ -332,7 +332,6 @@ Color Hd_USTC_CG_Rect_Light::Sample(
     if (cosVal < 0) {
         return Color{ 0 };
     }
-    //TODO
     return (irradiance * cosVal) / M_PI;
 }
 
