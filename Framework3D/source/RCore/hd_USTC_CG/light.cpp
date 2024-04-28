@@ -338,15 +338,20 @@ Color Hd_USTC_CG_Rect_Light::Sample(
 Color Hd_USTC_CG_Rect_Light::Intersect(const GfRay& ray, float& depth)
 {
     double distance;
+    GfVec3f worldSampleDir = GfCross(corner1 - corner0, corner3 - corner0);
+    float cosVal = GfDot(- ray.GetDirection().GetNormalized(), worldSampleDir.GetNormalized());
+    if (cosVal < 0) {
+        return Color{ 0 };
+    }
     if (ray.Intersect(corner0, corner1, corner2, &distance)) {
         depth = distance;
 
-        return irradiance / M_PI;
+        return (irradiance * cosVal) / M_PI;
     }
     if (ray.Intersect(corner2, corner3, corner0, &distance)) {
         depth = distance;
 
-        return irradiance / M_PI;
+        return (irradiance * cosVal) / M_PI;
     }
     depth = std::numeric_limits<float>::infinity();
     return { 0, 0, 0 };
