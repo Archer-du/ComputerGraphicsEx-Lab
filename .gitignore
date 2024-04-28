@@ -3,5 +3,6 @@ bin/
 libs/
 .vscode
 imgui.ini
-.vs
 .DS_Store
+.vs
+*.zip
